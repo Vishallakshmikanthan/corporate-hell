@@ -1,0 +1,19 @@
+{
+  "name": "corporate-hell",
+  "private": true,
+  "version": "1.0.0",
+  "description": "CORPORATE HELL™ — an absurdly realistic 3D corporate chaos simulator",
+  "scripts": {
+    "dev": "concurrently -n FRONTEND,BACKEND -c blue,green \"npm:dev:frontend\" \"npm:dev:backend\"",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "cd backend && uv run uvicorn app.main:app --reload --port 8000",
+    "install:all": "npm install && cd backend && uv sync",
+    "build": "npm --prefix frontend run build",
+    "test": "npm --prefix frontend run test && cd backend && uv run pytest -q",
+    "test:frontend": "npm --prefix frontend run test",
+    "test:backend": "cd backend && uv run pytest -q"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
