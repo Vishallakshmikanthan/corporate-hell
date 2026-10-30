@@ -10,6 +10,20 @@ from typing import Dict, Optional
 from openai import OpenAI
 from app.core.config import settings
 from app.schemas.dialogue import DialogueRequest, DialogueResponse
+from app.schemas.ai_v2 import (
+    CodeReviewRequest,
+    CodeReviewResponse,
+    StandupRequest,
+    StandupResponse,
+    SocialPostRequest,
+    SocialPostResponse,
+    PostmortemRequest,
+    PostmortemResponse,
+    PitchEvaluationRequest,
+    PitchEvaluationResponse,
+    EmailReplyRequest,
+    EmailReplyResponse,
+)
 from app.ai.personas import PERSONAS, get_fallback_dialogue
 
 logger = logging.getLogger(__name__)
@@ -121,6 +135,9 @@ class AIService:
             logger.warning("NVIDIA AI request failed or returned invalid JSON (%s); using fallback.", str(e))
             seed = int(hash(cache_key) % 1000)
             fallback = get_fallback_dialogue(req.archetype, seed=seed)
+            _response_cache[cache_key] = (now, fallback)
+            return fallback
+
     def generate_directive(self, req: "DirectiveRequest") -> "DirectiveResponse":
         from app.schemas.directive import DirectiveResponse, EmployeeQuote
 
@@ -283,6 +300,455 @@ class AIService:
 
         _response_cache[cache_key] = (now, fallback)
         return fallback
+
+    def generate_code_review(self, req: CodeReviewRequest) -> CodeReviewResponse:
+        cache_key = f"codereview:{req.ticket_title}:{req.reviewer_archetype}"
+        now = time.time()
+        if cache_key in _response_cache:
+            c_time, c_resp = _response_cache[cache_key]
+            if now - c_time < CACHE_TTL_SECONDS and isinstance(c_resp, CodeReviewResponse):
+                return c_resp
+
+        if self.client:
+            try:
+                sys_prompt = (
+                    "You are a satirical code reviewer in CORPORATE HELL™.\n"
+                    f"Reviewer Archetype: {req.reviewer_archetype}.\n"
+                    "Reply strictly with JSON:\n"
+                    "{\n"
+                    '  "approved": true or false,\n'
+                    '  "comment": "Snarky / hilarious code review comment under 30 words",\n'
+                    '  "requested_changes": ["change 1", "change 2"],\n'
+                    '  "snark_level": 7\n'
+                    "}"
+                )
+                user_msg = f"Ticket: {req.ticket_title}\nAuthor: {req.author}\nDiff snippet: {req.code_diff[:300]}"
+                resp = self.client.chat.completions.create(
+                    model=settings.NVIDIA_MODEL,
+                    messages=[
+                        {"role": "system", "content": sys_prompt},
+                        {"role": "user", "content": user_msg},
+                    ],
+                    temperature=0.8,
+                    max_tokens=220,
+                )
+                raw_text = resp.choices[0].message.content or ""
+                if raw_text.startswith("```"):
+                    lines = raw_text.splitlines()
+                    raw_text = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+                parsed = json.loads(raw_text.strip())
+                res = CodeReviewResponse(
+                    approved=bool(parsed.get("approved", True)),
+                    comment=parsed.get("comment", "LGTM with minor reservations."),
+                    requested_changes=parsed.get("requested_changes", []),
+                    snark_level=int(parsed.get("snark_level", 5)),
+                    source="ai",
+                )
+                _response_cache[cache_key] = (now, res)
+                return res
+            except Exception as e:
+                logger.warning("Code review AI generation failed (%s); using fallback.", str(e))
+
+        # Fallback templates based on archetype
+        arch = req.reviewer_archetype.lower()
+        if "architect" in arch:
+            res = CodeReviewResponse(
+                approved=False,
+                comment="LGTM in theory, but have you considered rewriting this using event-sourcing and 4 abstract factory interfaces?",
+                requested_changes=["Abstract into domain service interfaces", "Decouple database coupling"],
+                snark_level=9,
+                source="fallback",
+            )
+        elif "cynic" in arch or "senior" in arch:
+            res = CodeReviewResponse(
+                approved=False,
+                comment="Bold of you to assume this won't crash prod at 3 AM on Saturday. Where are the unit tests?",
+                requested_changes=["Add nil/undefined guards", "Write regression tests"],
+                snark_level=8,
+                source="fallback",
+            )
+        elif "intern" in arch or "chaos" in arch:
+            res = CodeReviewResponse(
+                approved=True,
+                comment="I ran git push --force on main and everything works fine on my laptop!",
+                requested_changes=[],
+                snark_level=3,
+                source="fallback",
+            )
+        else:
+            res = CodeReviewResponse(
+                approved=True,
+                comment="LGTM! Merging now so we hit our arbitrary sprint velocity targets.",
+                requested_changes=["Clean up leftover console.log statements"],
+                snark_level=4,
+                source="fallback",
+            )
+        _response_cache[cache_key] = (now, res)
+        return res
+
+    def generate_standup(self, req: StandupRequest) -> StandupResponse:
+        cache_key = f"standup:{req.employee_name}:{req.current_ticket or ''}"
+        now = time.time()
+        if cache_key in _response_cache:
+            c_time, c_resp = _response_cache[cache_key]
+            if now - c_time < CACHE_TTL_SECONDS and isinstance(c_resp, StandupResponse):
+                return c_resp
+
+        if self.client:
+            try:
+                sys_prompt = (
+                    "You are generating a daily agile standup update in CORPORATE HELL™.\n"
+                    "Reply strictly with JSON:\n"
+                    "{\n"
+                    '  "yesterday": "What employee worked on yesterday (under 20 words)",\n'
+                    '  "today": "What employee is tackling today (under 20 words)",\n'
+                    '  "blockers": "Satirical corporate blocker (under 15 words)",\n'
+                    '  "corporate_buzzword_count": 4\n'
+                    "}"
+                )
+                user_msg = f"Employee: {req.employee_name} ({req.role})\nCurrent Ticket: {req.current_ticket}\nBlocker note: {req.blockers}"
+                resp = self.client.chat.completions.create(
+                    model=settings.NVIDIA_MODEL,
+                    messages=[
+                        {"role": "system", "content": sys_prompt},
+                        {"role": "user", "content": user_msg},
+                    ],
+                    temperature=0.8,
+                    max_tokens=220,
+                )
+                raw_text = resp.choices[0].message.content or ""
+                if raw_text.startswith("```"):
+                    lines = raw_text.splitlines()
+                    raw_text = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+                parsed = json.loads(raw_text.strip())
+                res = StandupResponse(
+                    yesterday=parsed.get("yesterday", "Triaged backlog tech debt."),
+                    today=parsed.get("today", "Pushing sprint tickets to review."),
+                    blockers=parsed.get("blockers", "Waiting on cross-functional alignment."),
+                    corporate_buzzword_count=int(parsed.get("corporate_buzzword_count", 4)),
+                    source="ai",
+                )
+                _response_cache[cache_key] = (now, res)
+                return res
+            except Exception as e:
+                logger.warning("Standup AI generation failed (%s); using fallback.", str(e))
+
+        res = StandupResponse(
+            yesterday="Attended 4 alignment meetings to discuss aligning our next alignment meeting.",
+            today=f"Focusing on {req.current_ticket or 'quarterly mission-critical deliverables'}.",
+            blockers=req.blockers or "Awaiting IAM credentials approval from security committee.",
+            corporate_buzzword_count=5,
+            source="fallback",
+        )
+        _response_cache[cache_key] = (now, res)
+        return res
+
+    def generate_social(self, req: SocialPostRequest) -> SocialPostResponse:
+        cache_key = f"social:{req.platform}:{req.announcement_type}:{req.company_name}"
+        now = time.time()
+        if cache_key in _response_cache:
+            c_time, c_resp = _response_cache[cache_key]
+            if now - c_time < CACHE_TTL_SECONDS and isinstance(c_resp, SocialPostResponse):
+                return c_resp
+
+        if self.client:
+            try:
+                sys_prompt = (
+                    f"You generate viral satire posts for social media platform: '{req.platform}'.\n"
+                    "Platforms: chirper (Twitter parody), linkedout (cringe thought-leader LinkedIn parody), reddot (Reddit developer snark).\n"
+                    "Reply strictly with JSON:\n"
+                    "{\n"
+                    '  "post_content": "The actual post content matching platform tone",\n'
+                    '  "predicted_virality": 0.85,\n'
+                    '  "cringe_score": 8,\n'
+                    '  "hashtags": ["#Synergy", "#TechDisruption"]\n'
+                    "}"
+                )
+                user_msg = f"Company: {req.company_name} (Stage: {req.stage})\nAnnouncement: {req.announcement_type}"
+                resp = self.client.chat.completions.create(
+                    model=settings.NVIDIA_MODEL,
+                    messages=[
+                        {"role": "system", "content": sys_prompt},
+                        {"role": "user", "content": user_msg},
+                    ],
+                    temperature=0.85,
+                    max_tokens=250,
+                )
+                raw_text = resp.choices[0].message.content or ""
+                if raw_text.startswith("```"):
+                    lines = raw_text.splitlines()
+                    raw_text = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+                parsed = json.loads(raw_text.strip())
+                res = SocialPostResponse(
+                    post_content=parsed.get("post_content", "Exciting news dropping soon."),
+                    predicted_virality=float(parsed.get("predicted_virality", 0.7)),
+                    cringe_score=int(parsed.get("cringe_score", 6)),
+                    hashtags=parsed.get("hashtags", []),
+                    source="ai",
+                )
+                _response_cache[cache_key] = (now, res)
+                return res
+            except Exception as e:
+                logger.warning("Social AI generation failed (%s); using fallback.", str(e))
+
+        if req.platform == "linkedout":
+            content = f"🚀 Thrilled to announce {req.company_name} has achieved a new milestone: {req.announcement_type}! What did 72 hours without sleep teach me about B2B founder resilience? A 🧵 on relentless synergy... Agree? 👇"
+            cringe = 9
+            hashtags = ["#ThoughtLeadership", "#HustleCulture", "#FounderMindset"]
+        elif req.platform == "reddot":
+            content = f"TIL {req.company_name} shipped {req.announcement_type} on a Friday afternoon without breaking prod (somehow). AMA."
+            cringe = 4
+            hashtags = ["#programming", "#devops", "#corporate"]
+        else:
+            content = f"Big announcement! {req.company_name} just rolled out {req.announcement_type}. Zero tech debt, 100% vibes. Link in bio 🚀👇"
+            cringe = 6
+            hashtags = ["#TechNews", "#Startup", "#SaaS"]
+
+        res = SocialPostResponse(
+            post_content=content,
+            predicted_virality=0.75,
+            cringe_score=cringe,
+            hashtags=hashtags,
+            source="fallback",
+        )
+        _response_cache[cache_key] = (now, res)
+        return res
+
+    def generate_postmortem(self, req: PostmortemRequest) -> PostmortemResponse:
+        cache_key = f"postmortem:{req.incident_title}:{req.downtime_minutes}"
+        now = time.time()
+        if cache_key in _response_cache:
+            c_time, c_resp = _response_cache[cache_key]
+            if now - c_time < CACHE_TTL_SECONDS and isinstance(c_resp, PostmortemResponse):
+                return c_resp
+
+        if self.client:
+            try:
+                sys_prompt = (
+                    "You are generating a satirical incident postmortem / root-cause analysis for CORPORATE HELL™.\n"
+                    "Reply strictly with JSON:\n"
+                    "{\n"
+                    '  "title": "RCA: Incident Title",\n'
+                    '  "summary": "Executive summary under 40 words",\n'
+                    '  "five_whys": ["Why 1", "Why 2", "Why 3", "Why 4", "Why 5"],\n'
+                    '  "action_items": ["Action 1", "Action 2", "Action 3"],\n'
+                    '  "executive_excuse": "Classic corporate PR excuse"\n'
+                    "}"
+                )
+                user_msg = f"Incident: {req.incident_title}\nCause: {req.root_cause}\nDowntime: {req.downtime_minutes} min\nRevenue Lost: ${req.revenue_lost:,.2f}"
+                resp = self.client.chat.completions.create(
+                    model=settings.NVIDIA_MODEL,
+                    messages=[
+                        {"role": "system", "content": sys_prompt},
+                        {"role": "user", "content": user_msg},
+                    ],
+                    temperature=0.8,
+                    max_tokens=350,
+                )
+                raw_text = resp.choices[0].message.content or ""
+                if raw_text.startswith("```"):
+                    lines = raw_text.splitlines()
+                    raw_text = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+                parsed = json.loads(raw_text.strip())
+                res = PostmortemResponse(
+                    title=parsed.get("title", f"RCA: {req.incident_title}"),
+                    summary=parsed.get("summary", "Production experienced brief degradation."),
+                    five_whys=parsed.get("five_whys", []),
+                    action_items=parsed.get("action_items", []),
+                    executive_excuse=parsed.get("executive_excuse", "Upstream network anomaly."),
+                    source="ai",
+                )
+                _response_cache[cache_key] = (now, res)
+                return res
+            except Exception as e:
+                logger.warning("Postmortem AI generation failed (%s); using fallback.", str(e))
+
+        res = PostmortemResponse(
+            title=f"Root Cause Analysis: {req.incident_title}",
+            summary=f"A {req.downtime_minutes}-minute disruption cost the company ${req.revenue_lost:,.2f}. The incident was traced to: {req.root_cause}.",
+            five_whys=[
+                f"1. Why did the service fail? -> {req.root_cause}",
+                "2. Why was it not caught in staging? -> Staging environment was turned off to reduce AWSome bill",
+                "3. Why was staging turned off? -> Finance issued an emergency cost-cutting mandate",
+                "4. Why was the mandate issued? -> Executive team bought an enterprise AI subscription",
+                "5. Why did they buy the subscription? -> Board demanded AI in every quarterly slide deck",
+            ],
+            action_items=[
+                "Implement automated canary rollback guards",
+                "Mandate blue/green deployments for all prod releases",
+                "Establish a moratorium on Friday 5 PM deployments",
+            ],
+            executive_excuse="An unprecedented cascade of third-party cloud provider transit latencies outside our operational perimeter.",
+            source="fallback",
+        )
+        _response_cache[cache_key] = (now, res)
+        return res
+
+    def generate_pitch_evaluation(self, req: PitchEvaluationRequest) -> PitchEvaluationResponse:
+        cache_key = f"pitch:{req.round_number}:{req.player_response[:40]}"
+        now = time.time()
+        if cache_key in _response_cache:
+            c_time, c_resp = _response_cache[cache_key]
+            if now - c_time < CACHE_TTL_SECONDS and isinstance(c_resp, PitchEvaluationResponse):
+                return c_resp
+
+        if self.client:
+            try:
+                sys_prompt = (
+                    "You are a senior venture capital partner at Horizon Capital in CORPORATE HELL™.\n"
+                    "Evaluate the CEO's response during a high-stakes boardroom pitch.\n"
+                    "Reply strictly with valid JSON:\n"
+                    "{\n"
+                    '  "partner_name": "James Carter",\n'
+                    '  "partner_reaction": "Sharp, realistic VC reaction under 30 words",\n'
+                    '  "confidence_delta": 8,\n'
+                    '  "follow_up_note": "Brief investment memo note under 18 words"\n'
+                    "}"
+                )
+                user_msg = (
+                    f"Firm: {req.investor_group} | Round {req.round_number}\n"
+                    f"Slide Shown: {req.slide_title}\n"
+                    f"Question: {req.investor_question}\n"
+                    f"CEO Answer: {req.player_response}\n"
+                    f"Metrics: Revenue=${req.revenue:,.0f}, Burn=${req.burn_rate:,.0f}, Morale={req.morale:.0f}%"
+                )
+                resp = self.client.chat.completions.create(
+                    model=settings.NVIDIA_MODEL,
+                    messages=[
+                        {"role": "system", "content": sys_prompt},
+                        {"role": "user", "content": user_msg},
+                    ],
+                    temperature=0.75,
+                    max_tokens=220,
+                )
+                raw_text = resp.choices[0].message.content or ""
+                if raw_text.startswith("```"):
+                    lines = raw_text.splitlines()
+                    raw_text = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+                parsed = json.loads(raw_text.strip())
+                res = PitchEvaluationResponse(
+                    partner_name=parsed.get("partner_name", "James Carter"),
+                    partner_reaction=parsed.get("partner_reaction", "That aligns with our thesis on disciplined unit economics."),
+                    confidence_delta=max(-25, min(25, int(parsed.get("confidence_delta", 7)))),
+                    follow_up_note=parsed.get("follow_up_note", "Strong narrative alignment with current metrics."),
+                    source="ai",
+                )
+                _response_cache[cache_key] = (now, res)
+                return res
+            except Exception as e:
+                logger.warning("Pitch AI evaluation failed (%s); using fallback.", str(e))
+
+        resp_lower = req.player_response.lower()
+        if "unit economics" in resp_lower or "organic" in resp_lower or "margin" in resp_lower or "disciplin" in resp_lower:
+            delta = 9
+            reaction = "James Carter nods approvingly: 'Disciplined unit economics and clear capital efficiency—that is exactly what our IC wants to see.'"
+            note = "Partners impressed by sustainable growth thesis."
+        elif "aggressiv" in resp_lower or "10x" in resp_lower or "blitz" in resp_lower:
+            delta = 4
+            reaction = "Sarah Kim leans forward: 'Ambitious growth trajectory, though Daniel is still scrutinizing the near-term burn multiple.'"
+            note = "High upside recognized, burn rate flagged for monitoring."
+        elif "honest" in resp_lower or "figuring" in resp_lower:
+            delta = 5
+            reaction = "Priya Mehta smiles: 'Candor is rare in this boardroom. We respect founder self-awareness, provided execution tightens this quarter.'"
+            note = "Founder transparency boosted partner trust."
+        else:
+            delta = 7
+            reaction = "James Carter jots a note in his leather folio: 'Compelling positioning. Let us see how the numbers hold up across the next quarter.'"
+            note = "Measured positive reception from the partnership."
+
+        res = PitchEvaluationResponse(
+            partner_name="James Carter",
+            partner_reaction=reaction,
+            confidence_delta=delta,
+            follow_up_note=note,
+            source="fallback",
+        )
+        _response_cache[cache_key] = (now, res)
+        return res
+
+    def generate_email_reply(self, req: EmailReplyRequest) -> EmailReplyResponse:
+        cache_key = f"emailreply:{req.subject}:{req.reply_tone}"
+        now = time.time()
+        if cache_key in _response_cache:
+            c_time, c_resp = _response_cache[cache_key]
+            if now - c_time < CACHE_TTL_SECONDS and isinstance(c_resp, EmailReplyResponse):
+                return c_resp
+
+        if self.client:
+            try:
+                sys_prompt = (
+                    "You are the executive chief-of-staff AI in CORPORATE HELL™.\n"
+                    "Draft a sharp, polished executive email reply for the CEO.\n"
+                    "Reply strictly with valid JSON:\n"
+                    "{\n"
+                    '  "draft_reply": "2-4 sentence executive email response",\n'
+                    '  "predicted_outcome": "Brief impact preview under 15 words",\n'
+                    '  "confidence_delta": 5\n'
+                    "}"
+                )
+                user_msg = f"From: {req.sender_name}\nSubject: {req.subject}\nTone: {req.reply_tone}\nBody: {req.email_body[:400]}"
+                resp = self.client.chat.completions.create(
+                    model=settings.NVIDIA_MODEL,
+                    messages=[
+                        {"role": "system", "content": sys_prompt},
+                        {"role": "user", "content": user_msg},
+                    ],
+                    temperature=0.75,
+                    max_tokens=240,
+                )
+                raw_text = resp.choices[0].message.content or ""
+                if raw_text.startswith("```"):
+                    lines = raw_text.splitlines()
+                    raw_text = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+                parsed = json.loads(raw_text.strip())
+                res = EmailReplyResponse(
+                    draft_reply=parsed.get("draft_reply", "Thank you for the update. Let's align on execution milestones."),
+                    predicted_outcome=parsed.get("predicted_outcome", "+5 Stakeholder Confidence & clear alignment"),
+                    confidence_delta=int(parsed.get("confidence_delta", 5)),
+                    source="ai",
+                )
+                _response_cache[cache_key] = (now, res)
+                return res
+            except Exception as e:
+                logger.warning("Email reply AI generation failed (%s); using fallback.", str(e))
+
+        tone = req.reply_tone.lower()
+        if "negotiate" in tone:
+            draft = (
+                f"Thank you for reaching out, {req.sender_name}. While we value this partnership, our current traction and unit economics warrant more favorable terms. "
+                f"I have attached our updated projections—let's reconvene Thursday to finalize an agreement that works for both sides."
+            )
+            outcome = "Strong negotiation leverage (+6 Confidence, better terms)"
+            delta = 6
+        elif "time" in tone or "defer" in tone:
+            draft = (
+                f"Appreciate the note, {req.sender_name}. Our engineering and operations leads are currently wrapping up a mission-critical sprint milestone. "
+                f"We will deliver the full data package by Friday afternoon with complete audit verification."
+            )
+            outcome = "Buys 48 hours of breathing room (+2 Trust)"
+            delta = 2
+        elif "decline" in tone:
+            draft = (
+                f"Thank you for the proposal, {req.sender_name}. After reviewing our Q3 capital allocation priorities, we have decided to pass on this initiative to maintain strict focus on our core product roadmap."
+            )
+            outcome = "Preserves treasury focus, closes thread cleanly"
+            delta = 1
+        else:
+            draft = (
+                f"Thank you for the productive update, {req.sender_name}. I have reviewed the key points with our leadership team and attached our financial projections, hiring plan, and competitive analysis. "
+                f"We are ready to move forward and address any technical questions in our next session."
+            )
+            outcome = "Positive stakeholder alignment (+5 Confidence & Reputation)"
+            delta = 5
+
+        res = EmailReplyResponse(
+            draft_reply=draft,
+            predicted_outcome=outcome,
+            confidence_delta=delta,
+            source="fallback",
+        )
+        _response_cache[cache_key] = (now, res)
+        return res
 
 
 ai_service = AIService()

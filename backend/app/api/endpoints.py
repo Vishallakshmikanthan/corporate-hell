@@ -9,6 +9,20 @@ from app.db.database import get_db
 from app.models.save import SaveRecord
 from app.schemas.dialogue import DialogueRequest, DialogueResponse
 from app.schemas.directive import DirectiveRequest, DirectiveResponse
+from app.schemas.ai_v2 import (
+    CodeReviewRequest,
+    CodeReviewResponse,
+    StandupRequest,
+    StandupResponse,
+    SocialPostRequest,
+    SocialPostResponse,
+    PostmortemRequest,
+    PostmortemResponse,
+    PitchEvaluationRequest,
+    PitchEvaluationResponse,
+    EmailReplyRequest,
+    EmailReplyResponse,
+)
 from app.schemas.saves import SaveCreate, SaveResponse, SaveSummary
 from app.ai.service import ai_service
 
@@ -40,6 +54,36 @@ def generate_dialogue(req: DialogueRequest):
 @router.post("/ai/directive", response_model=DirectiveResponse)
 def execute_directive(req: DirectiveRequest):
     return ai_service.generate_directive(req)
+
+
+@router.post("/ai/code_review", response_model=CodeReviewResponse)
+def code_review(req: CodeReviewRequest):
+    return ai_service.generate_code_review(req)
+
+
+@router.post("/ai/standup", response_model=StandupResponse)
+def daily_standup(req: StandupRequest):
+    return ai_service.generate_standup(req)
+
+
+@router.post("/ai/social", response_model=SocialPostResponse)
+def generate_social(req: SocialPostRequest):
+    return ai_service.generate_social(req)
+
+
+@router.post("/ai/postmortem", response_model=PostmortemResponse)
+def incident_postmortem(req: PostmortemRequest):
+    return ai_service.generate_postmortem(req)
+
+
+@router.post("/ai/pitch", response_model=PitchEvaluationResponse)
+def evaluate_pitch(req: PitchEvaluationRequest):
+    return ai_service.generate_pitch_evaluation(req)
+
+
+@router.post("/ai/email_reply", response_model=EmailReplyResponse)
+def generate_email_reply(req: EmailReplyRequest):
+    return ai_service.generate_email_reply(req)
 
 
 @router.get("/saves", response_model=List[SaveSummary])
