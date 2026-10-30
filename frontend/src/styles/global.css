@@ -1,42 +1,68 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/archivo";
+@import "../ui/pixel/tokens.css";
 
 @theme {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Archivo Variable", "Inter Variable", ui-sans-serif, sans-serif;
+  --font-display: "Playfair Display", "Cormorant Garamond", "Archivo Variable", Georgia, serif;
+  --font-serif: "Playfair Display", "Cormorant Garamond", Georgia, serif;
 
-  /* Deep charcoal scale */
-  --color-ink-950: #101114;
-  --color-ink-900: #16181d;
-  --color-ink-850: #1b1e24;
-  --color-ink-800: #21242b;
-  --color-ink-700: #2a2e37;
-  --color-ink-600: #3a3f4b;
-  --color-ink-500: #565c69;
-  --color-ink-400: #78808f;
-  --color-ink-300: #9aa3b2;
-  --color-ink-200: #c3cad6;
+  /* Warm espresso & charcoal scale (zero cold/blue undertones) */
+  --color-ink-950: #120f0d;
+  --color-ink-900: #181411;
+  --color-ink-850: #1f1a16;
+  --color-ink-800: #27211c;
+  --color-ink-700: #352c25;
+  --color-ink-600: #4a3e34;
+  --color-ink-500: #68594c;
+  --color-ink-400: #8e7c6b;
+  --color-ink-300: #b5a695;
+  --color-ink-200: #d8cdc0;
 
-  /* Warm off-white surfaces */
-  --color-paper-50: #f6f3ea;
-  --color-paper-100: #efe9dc;
-  --color-paper-200: #e2dccc;
-  --color-paper-300: #cfc4ab;
+  /* Warm ivory, cream & beige surfaces */
+  --color-paper-50: #faf7f0;
+  --color-paper-100: #f3ede0;
+  --color-paper-200: #e6decb;
+  --color-paper-300: #d4c8b0;
+  --color-paper-400: #bfb094;
 
-  /* Muted corporate blue */
-  --color-corp-200: #b9c8ff;
-  --color-corp-300: #8ba3ff;
-  --color-corp-400: #6d87f7;
-  --color-corp-500: #4f6df0;
-  --color-corp-600: #3d55cf;
+  /* Muted luxury gold (replaces corporate blue completely) */
+  --color-corp-200: #f5e1b5;
+  --color-corp-300: #e5c478;
+  --color-corp-400: #d4a84f;
+  --color-corp-500: #b88933;
+  --color-corp-600: #966c22;
 
-  /* Toxic lime */
-  --color-acid-200: #e2f79b;
-  --color-acid-300: #d3f26a;
-  --color-acid-400: #b8e04a;
-  --color-acid-500: #97c62e;
-  --color-acid-600: #7aa41d;
+  /* Remap Tailwind blue/indigo/sky/cyan tokens to warm muted gold/bronze so NO blue ever renders */
+  --color-blue-50: #fbf6eb;
+  --color-blue-100: #f5e8c7;
+  --color-blue-200: #ecd298;
+  --color-blue-300: #e0b968;
+  --color-blue-400: #d4a84f;
+  --color-blue-500: #c5963a;
+  --color-blue-600: #a87b28;
+  --color-blue-700: #87601d;
+  --color-blue-800: #694a17;
+  --color-blue-900: #4d3611;
+  --color-blue-950: #2c1e08;
+
+  --color-sky-300: #e0b968;
+  --color-sky-400: #d4a84f;
+  --color-sky-500: #c5963a;
+  --color-cyan-300: #e0b968;
+  --color-cyan-400: #d4a84f;
+  --color-cyan-500: #c5963a;
+  --color-indigo-300: #e0b968;
+  --color-indigo-400: #d4a84f;
+  --color-indigo-500: #c5963a;
+
+  /* Warm champagne gold / sage highlight */
+  --color-acid-200: #f7e6be;
+  --color-acid-300: #ebd090;
+  --color-acid-400: #d4a84f;
+  --color-acid-500: #b88933;
+  --color-acid-600: #966c22;
 
   /* Warning amber */
   --color-warn-200: #ffd9a0;
@@ -44,7 +70,7 @@
   --color-warn-400: #e8a33d;
   --color-warn-500: #cf8521;
 
-  /* Restrained emergency red */
+  /* Restrained emergency crimson/terracotta */
   --color-alert-300: #f08578;
   --color-alert-400: #e25848;
   --color-alert-500: #c74234;
@@ -66,21 +92,21 @@ body {
 }
 
 ::selection {
-  background: var(--color-acid-400);
+  background: var(--color-corp-400);
   color: var(--color-ink-950);
 }
 
 /* ---------- scrollbars ---------- */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #3a3f4b transparent;
+  scrollbar-color: #4a3e34 transparent;
 }
 *::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 *::-webkit-scrollbar-thumb {
-  background: #3a3f4b;
+  background: #4a3e34;
   border-radius: 99px;
 }
 *::-webkit-scrollbar-track {
@@ -89,27 +115,63 @@ body {
 
 /* ---------- focus visibility ---------- */
 :focus-visible {
-  outline: 2px solid var(--color-acid-400);
+  outline: 2px solid var(--color-corp-400);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* ---------- reusable surfaces ---------- */
+/* ---------- reusable executive surfaces ---------- */
 .surface {
-  background: var(--color-ink-850);
-  border: 1px solid var(--color-ink-700);
+  background: rgba(28, 23, 19, 0.9);
+  border: 1px solid rgba(212, 168, 79, 0.2);
   border-radius: 14px;
+  backdrop-filter: blur(12px);
 }
 
 .surface-raised {
-  background: linear-gradient(180deg, #22262e 0%, #1b1e24 100%);
-  border: 1px solid var(--color-ink-600);
+  background: linear-gradient(180deg, rgba(39, 33, 28, 0.94) 0%, rgba(26, 21, 17, 0.96) 100%);
+  border: 1px solid rgba(212, 168, 79, 0.3);
   border-radius: 14px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.52), inset 0 1px 0 rgba(250, 247, 240, 0.06);
+  backdrop-filter: blur(16px);
+}
+
+.panel-dark {
+  background: linear-gradient(180deg, rgba(31, 26, 21, 0.92) 0%, rgba(20, 17, 14, 0.95) 100%);
+  border: 1px solid rgba(212, 168, 79, 0.25);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 245, 225, 0.05);
+  backdrop-filter: blur(14px);
+}
+
+.panel-cream {
+  background: linear-gradient(180deg, #faf7f0 0%, #f2ece0 100%);
+  color: #1f1a16;
+  border: 1px solid #dfd3bd;
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(18, 15, 13, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.btn-gold {
+  background: linear-gradient(180deg, #dfc075 0%, #c4953d 100%);
+  color: #181411;
+  font-weight: 600;
+  border: 1px solid #ebd293;
+  box-shadow: 0 4px 14px rgba(196, 149, 61, 0.28);
+  transition: all 0.16s ease;
+}
+.btn-gold:hover:not(:disabled) {
+  background: linear-gradient(180deg, #e9cc84 0%, #d1a248 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(212, 168, 79, 0.38);
+}
+.btn-gold:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .hairline {
-  border-color: var(--color-ink-700);
+  border-color: rgba(212, 168, 79, 0.18);
 }
 
 .mono {
@@ -120,6 +182,11 @@ body {
 .font-display {
   font-family: var(--font-display);
   letter-spacing: 0.02em;
+}
+
+.font-serif-title {
+  font-family: var(--font-serif);
+  letter-spacing: 0.03em;
 }
 
 /* ---------- animations ---------- */
