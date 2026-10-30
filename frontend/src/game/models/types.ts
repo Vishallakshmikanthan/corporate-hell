@@ -78,6 +78,244 @@ export type EventCategory =
   | 'ai'
   | 'celebration'
   | 'luck'
+  | 'tech'
+  | 'social'
+
+// ---------------------------------------------------------------------------
+// V2 "Ship It" — Role Modes & Software Workflow Types
+// ---------------------------------------------------------------------------
+
+export type PlayerRole = 'ceo' | 'developer' | 'designer' | 'pm' | 'devops' | 'overall' | 'intern'
+
+export type TicketKind = 'feature' | 'bug' | 'chore' | 'design' | 'infra' | 'ml'
+export type TicketState = 'backlog' | 'todo' | 'doing' | 'review' | 'qa' | 'done' | 'blocked'
+export type TicketSource = 'roadmap' | 'customer' | 'investor' | 'employee' | 'incident'
+
+export interface Ticket {
+  id: string
+  title: string
+  kind: TicketKind
+  complexity: 1 | 2 | 3 | 5 | 8 // story points
+  assigneeId?: string
+  state: TicketState
+  source: TicketSource
+  bugRisk: number // 0..1, hidden until QA/prod
+  designReady: boolean
+  techDebtDelta: number
+  progress?: number // 0..100
+}
+
+export interface Sprint {
+  id: string
+  number: number
+  startDay: number
+  endDay: number
+  committedPoints: number
+  donePoints: number
+  tickets: string[]
+  goal: string
+}
+
+export interface Branch {
+  name: string
+  authorId: string
+  commits: number
+  conflicts: number
+  ticketId: string
+}
+
+export interface PullRequest {
+  id: string
+  branch: string
+  title: string
+  authorId: string
+  reviewerId?: string
+  size: number
+  quality: number
+  state: 'open' | 'changes_requested' | 'approved' | 'merged'
+  comments?: { author: string; text: string; day: number }[]
+}
+
+export interface Repo {
+  name: string
+  branches: Branch[]
+  mainHealth: number // 0..100
+  techDebt: number // 0..100
+  lastCommitMessage?: string
+}
+
+export type PipelineStageId =
+  | 'lint'
+  | 'unit_tests'
+  | 'build'
+  | 'integration_tests'
+  | 'security_scan'
+  | 'docker_image'
+  | 'deploy_staging'
+  | 'smoke_tests'
+  | 'deploy_prod'
+
+export interface PipelineStage {
+  id: PipelineStageId
+  name: string
+  status: 'pending' | 'running' | 'passed' | 'failed'
+  durationTicks: number
+  log?: string
+}
+
+export interface PipelineFailureFixOption {
+  id: string
+  label: string
+  description: string
+  cost: number
+  techDebtDelta: number
+  timeCostTicks: number
+  successChance: number
+}
+
+export interface PipelineFailure {
+  id: string
+  stageId: PipelineStageId
+  title: string
+  cause: string
+  incidentId?: string
+  fixOptions: PipelineFailureFixOption[]
+}
+
+export interface Pipeline {
+  status: 'idle' | 'running' | 'passed' | 'failed'
+  currentStageIndex: number
+  stages: PipelineStage[]
+  activeFailure?: PipelineFailure
+  lastRunTick: number
+}
+
+export type DeployStrategy = 'friday' | 'rolling' | 'blue_green' | 'canary' | 'feature_flags'
+
+export interface Infra {
+  region: 'us' | 'eu' | 'asia'
+  instances: number
+  autoscale: boolean
+  dbSize: 'S' | 'M' | 'L'
+  cdn: boolean
+  monitoring: boolean
+  backups: boolean
+  monthlyCost: number
+  capacity: number // requests/s
+  currentTraffic: number // requests/s
+  outageTicksRemaining: number
+}
+
+export interface GpuMarket {
+  spotPrice: number
+  onDemandPrice: number
+  availability: number // 0..1
+  history: { tick: number; spot: number; onDemand: number }[]
+}
+
+export interface GpuJob {
+  id: string
+  ticketId: string
+  name: string
+  gpus: number
+  hoursNeeded: number
+  progress: number // 0..100
+  mode: 'spot' | 'on_demand'
+  checkpointing: boolean
+  costAccumulated: number
+  status: 'running' | 'preempted' | 'completed' | 'failed'
+}
+
+export interface Suggestion {
+  id: string
+  from: 'customer' | 'investor' | 'employee' | 'social' | 'ceo'
+  text: string
+  value: number // expected revenue or quality bump
+  effort: number // story points
+  urgency: number // 1..5
+  politicalWeight: number // 1..5
+  status: 'pending' | 'accepted' | 'deferred' | 'rejected'
+}
+
+export type SocialPlatform = 'chirper' | 'linkedout' | 'instagrim' | 'tiktak' | 'reddot' | 'newsletter'
+
+export interface SocialAccount {
+  platform: SocialPlatform
+  followers: number
+  engagementRate: number
+  sentiment: number // 0..100
+}
+
+export interface SocialComment {
+  id: string
+  author: string
+  handle: string
+  text: string
+  likes: number
+  isRoast?: boolean
+  replied?: boolean
+}
+
+export interface SocialPost {
+  id: string
+  platform: SocialPlatform
+  kind: 'announcement' | 'meme' | 'thread' | 'demo_video' | 'apology' | 'hiring' | 'behind_the_scenes'
+  content: string
+  quality: number
+  authorId: string
+  authorName: string
+  postedDay: number
+  postedTick: number
+  reach: number
+  likes: number
+  shares: number
+  sentiment: number
+  comments: SocialComment[]
+}
+
+export type CompanyStage = 'garage' | 'seed' | 'series_a' | 'series_b' | 'scale_up' | 'unicorn'
+
+export interface GrowthFunnel {
+  impressions: number
+  visits: number
+  signups: number
+  activatedUsers: number
+  payingCustomers: number
+  churnRate: number // 0..1
+  mrr: number
+  valuation: number
+  cac: number
+  ltv: number
+}
+
+export interface PlayerAvatarState {
+  role: PlayerRole
+  name: string
+  visual: EmployeeVisual
+  position: Vec2
+  facing: number
+  cameraMode: 'follow' | 'orbit' | 'desk'
+  energy: number // 0..100
+  focus: number // 0..100
+  stress: number // 0..100
+  reputationWithTeam: number // 0..100
+  coffeesToday: number
+  skillXP: Record<string, number>
+  perks: string[]
+  currentInteractable: string | null
+  currentBranch?: string
+  currentTicketId?: string
+}
+
+export type MeetingKind =
+  | 'standup'
+  | 'sprint_planning'
+  | 'design_review'
+  | 'code_review'
+  | 'retro'
+  | 'stakeholder_demo'
+  | 'board'
+  | 'could_have_been_email'
 
 // ---------------------------------------------------------------------------
 // Primitives
@@ -228,6 +466,8 @@ export interface Meeting {
   timesHeld: number
   /** True while the meeting is currently running this tick. */
   active: boolean
+  kind?: MeetingKind
+  attendeeStances?: Record<string, 'supports' | 'opposes' | 'neutral'>
 }
 
 export type EquipmentKey = 'coffeeMachineBroken' | 'printerJammed' | 'acBroken' | 'serverRoomHot'
@@ -271,6 +511,8 @@ export interface Incident {
   dayResolved?: number
   /** Auto-resolve silently after this day (used for self-healing issues). */
   expiresDay?: number
+  investigationSummary?: string
+  affectedDepartment?: Department
 }
 
 /** Declarative effects used by events, decisions and email choices. */
@@ -308,6 +550,12 @@ export interface EmailChoice {
   effects: EffectSpec
 }
 
+export interface EmailAttachment {
+  name: string
+  type: 'pdf' | 'xlsx' | 'doc'
+  summary: string
+}
+
 export interface Email {
   id: string
   uid: string
@@ -320,6 +568,15 @@ export interface Email {
   choices: EmailChoice[]
   read: boolean
   participantIds: string[]
+  category?: 'important' | 'investors' | 'employees' | 'customers' | 'hr' | 'archived'
+  important?: boolean
+  archived?: boolean
+  timestamp?: string
+  attachments?: EmailAttachment[]
+  senderRole?: string
+  senderRelation?: string
+  keyTopics?: string[]
+  repliedText?: string
 }
 
 export interface EventRecord {
@@ -493,6 +750,32 @@ export interface CompanyState {
 
   /** Counter for stable unique ids. */
   nextUid: number
+
+  // --- V2 Software Workflow & Avatar state ---
+  playerRole: PlayerRole
+  playerAvatar: PlayerAvatarState
+  stage: CompanyStage
+  techDebt: number // 0..100
+  velocity: number // story points / sprint
+  codeQuality: number // 0..100
+  testCoverage: number // 0..100
+  uptime: number // 0..100
+  culture: number // 0..100
+  tickets: Ticket[]
+  sprint: Sprint | null
+  repo: Repo
+  prs: PullRequest[]
+  pipeline: Pipeline
+  infra: Infra
+  gpuMarket: GpuMarket
+  gpuJobs: GpuJob[]
+  suggestions: Suggestion[]
+  socialAccounts: Record<SocialPlatform, SocialAccount>
+  socialPosts: SocialPost[]
+  growth: GrowthFunnel
+  onCallEmployeeId?: string
+  lastWarRoomTick?: number
+  career?: import('../engine/career').CareerChapterState
 }
 
 // ---------------------------------------------------------------------------
@@ -524,6 +807,105 @@ export type PlayerAction =
   | { type: 'choose_email'; emailId: string; choiceId: string }
   | { type: 'trigger_event'; eventId: string }
   | { type: 'nudge'; employeeId: string } // "get back to work" — small push
+  // V2 actions
+  | { type: 'set_player_role'; role: PlayerRole }
+  | { type: 'avatar_move'; position: Vec2; facing: number }
+  | { type: 'avatar_interact'; targetId: string }
+  | { type: 'set_camera_mode'; mode: 'follow' | 'orbit' | 'desk' }
+  | { type: 'pick_ticket'; ticketId: string; assigneeId?: string }
+  | { type: 'create_branch'; ticketId: string; branchName?: string }
+  | { type: 'commit_work'; branchName: string; qualityDelta?: number }
+  | { type: 'open_pr'; branchName: string; size?: number }
+  | { type: 'review_pr'; prId: string; approve: boolean; feedback?: string }
+  | { type: 'resolve_conflict'; branchName: string; strategy: 'ours' | 'theirs' | 'manual' }
+  | { type: 'merge_pr'; prId: string }
+  | { type: 'run_pipeline'; branchName?: string }
+  | { type: 'fix_pipeline_failure'; failureId: string; optionId: string }
+  | { type: 'deploy'; environment: 'staging' | 'prod'; strategy: DeployStrategy }
+  | { type: 'rollback' }
+  | { type: 'scale_infra'; instancesDelta: number; autoscale?: boolean; dbSize?: 'S' | 'M' | 'L'; cdn?: boolean; backups?: boolean }
+  | { type: 'rent_gpu'; ticketId: string; gpus: number; mode: 'spot' | 'on_demand'; checkpointing: boolean }
+  | { type: 'cancel_gpu_job'; jobId: string }
+  | { type: 'handle_suggestion'; suggestionId: string; decision: 'accept' | 'defer' | 'reject_polite' | 'reject_rude' }
+  | { type: 'office_break'; activity: 'coffee' | 'lunch' | 'ping_pong' | 'walk' | 'nap' | 'gossip'; targetEmployeeId?: string }
+  | { type: 'post_social'; platform: SocialPlatform; kind: SocialPost['kind']; content?: string }
+  | { type: 'reply_social'; postId: string; commentId: string; responseKind: 'helpful' | 'defensive' | 'meme' }
+  | { type: 'pitch_investors'; pitchDeckQuality: number }
+  | { type: 'upgrade_company_stage' }
+  | { type: 'study_docs'; topic?: string }
+  | { type: 'ship_side_project'; title?: string }
+  | { type: 'code_sprint_result'; score: number; bugsSquashed: number }
+  | { type: 'recruit_cofounder'; candidateId: string }
+  | { type: 'crunch_hackathon'; hours: number }
+  | { type: 'pitch_hackathon_result'; won: boolean; rank: number; prizeCash: number }
+  | { type: 'split_founder_equity'; coFounders: { id: string; name: string; role: string; equityPct: number; satisfaction: number }[]; founderEquityPct: number }
+  | { type: 'sign_term_sheet_offer'; offerId: string }
+  | { type: 'place_furniture'; itemId?: string; x?: number; y?: number }
+  | { type: 'advance_chapter'; targetChapter: import('../engine/career').CareerChapterId }
+  // Complete 9-Section Executive Actions
+  | {
+      type: 'conclude_pitch'
+      cashRaised: number
+      valuation: number
+      equityDiluted: number
+      confidenceDelta: number
+      investorName: string
+      outcome: 'full' | 'partial' | 'rejected'
+    }
+  | {
+      type: 'employee_conversation'
+      employeeId: string
+      choiceLabel: string
+      moraleDelta: number
+      stressDelta: number
+      trustDelta: number
+      productivityDelta: number
+      memoryText: string
+      cost?: number
+    }
+  | { type: 'adjust_salary'; employeeId: string; newSalary: number }
+  | {
+      type: 'create_project'
+      name: string
+      department: Department
+      clientName: string
+      pointsTotal: number
+      deadlineDay: number
+      revenueOnDone: number
+    }
+  | { type: 'boost_project'; projectId: string; cost: number; pointsGain: number }
+  | { type: 'adjust_dept_budget'; department: Department; budgetPerDay: number }
+  | {
+      type: 'treasury_action'
+      subtype:
+        | 'take_loan'
+        | 'repay_loan'
+        | 'cut_costs'
+        | 'increase_pricing'
+        | 'emergency_fundraise'
+        | 'prepare_financials'
+      amount?: number
+    }
+  | { type: 'investigate_incident'; incidentId: string; summary: string }
+  | {
+      type: 'reply_email_custom'
+      emailId: string
+      replyText: string
+      confidenceDelta: number
+      cashDelta?: number
+      moraleDelta?: number
+    }
+  | { type: 'toggle_email_flag'; emailId: string; flag: 'important' | 'archived' }
+  | {
+      type: 'complete_campaign_scene'
+      chapterNumber: number
+      sceneId: string
+      choiceLabel: string
+      cashDelta?: number
+      moraleDelta?: number
+      confidenceDelta?: number
+      reputationDelta?: number
+    }
 
 export interface ActionResult {
   ok: boolean
@@ -543,6 +925,9 @@ export interface EngineConfig {
   industry: string
   difficulty: Difficulty
   scenarioId: string // 'standard' or a scenario preset id
+  playerRole?: PlayerRole
+  avatarVisual?: EmployeeVisual
+  playerName?: string
 }
 
 export interface EngineEvents {
@@ -570,6 +955,7 @@ export const BOUNDS = {
   morale: [0, 100],
   stress: [0, 100],
   energy: [0, 100],
+  focus: [0, 100],
   productivity: [0, 100],
   trust: [0, 100],
   reputation: [0, 100],
@@ -581,6 +967,11 @@ export const BOUNDS = {
   relationship: [-100, 100],
   skill: [1, 10],
   goalProgress: [0, Infinity],
+  techDebt: [0, 100],
+  codeQuality: [0, 100],
+  testCoverage: [0, 100],
+  uptime: [0, 100],
+  culture: [0, 100],
 } as const
 
 /** Simulation time constants. */
@@ -626,4 +1017,32 @@ export const ROLE_SALARY: Record<Role, number> = {
   specialist: 260,
   junior: 200,
   intern: 110,
+}
+
+export const PLAYER_ROLE_LABELS: Record<PlayerRole, string> = {
+  ceo: 'Chief Executive Officer',
+  developer: 'Software Engineer',
+  designer: 'Product Designer',
+  pm: 'Product Manager',
+  devops: 'DevOps & SRE',
+  overall: 'Director (God View)',
+  intern: 'Engineering Intern',
+}
+
+export const COMPANY_STAGE_LABELS: Record<CompanyStage, string> = {
+  garage: 'Garage Startup (3 Desks)',
+  seed: 'Seed Funded (MVP + Traction)',
+  series_a: 'Series A (Growth + SRE)',
+  series_b: 'Series B (Multi-product Scale)',
+  scale_up: 'Scale-Up (Profitable / Expansion)',
+  unicorn: 'Unicorn / IPO (Endgame)',
+}
+
+export const SOCIAL_PLATFORM_LABELS: Record<SocialPlatform, { name: string; handlePrefix: string; icon: string }> = {
+  chirper: { name: 'Chirper', handlePrefix: '@corp_', icon: 'bird' },
+  linkedout: { name: 'LinkedOut', handlePrefix: 'in/', icon: 'briefcase' },
+  reddot: { name: 'RedDot', handlePrefix: 'r/', icon: 'message-square' },
+  tiktak: { name: 'TikTak', handlePrefix: '@tiktak_', icon: 'video' },
+  instagrim: { name: 'InstaGrim', handlePrefix: '@grim_', icon: 'camera' },
+  newsletter: { name: 'SubStalker', handlePrefix: 'sub/', icon: 'mail' },
 }

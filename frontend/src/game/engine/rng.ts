@@ -45,6 +45,21 @@ export class SeededRandom {
     return this.next() < p
   }
 
+  /** Alias for chance(p). */
+  boolean(p = 0.5): boolean {
+    return this.chance(p)
+  }
+
+  /** Alias for int(min, max). */
+  integer(min: number, max: number): number {
+    return this.int(min, max)
+  }
+
+  /** Alias for range(min, max). */
+  float(min: number, max: number): number {
+    return this.range(min, max)
+  }
+
   /** Pick a uniform random element. */
   pick<T>(arr: readonly T[]): T {
     return arr[Math.floor(this.next() * arr.length)]

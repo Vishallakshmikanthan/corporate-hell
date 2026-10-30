@@ -6,8 +6,18 @@
  */
 import type { CompanyState, SaveData } from '../models/types'
 
+import { createInitialTickets, createInitialSprint } from '../engine/tickets'
+import { createInitialRepo, createInitialPRs } from '../engine/repo'
+import { createInitialPipeline } from '../engine/pipeline'
+import { createInitialInfra } from '../engine/infra'
+import { createInitialGpuMarket } from '../engine/gpu'
+import { createInitialSuggestions } from '../engine/suggestions'
+import { createInitialSocialAccounts, createInitialSocialPosts } from '../engine/social'
+import { createInitialGrowthFunnel } from '../engine/growth'
+import { createInitialAvatar } from '../engine/avatar'
+
 const SAVE_KEY_PREFIX = 'corp_hell_save_'
-const CURRENT_VERSION = 1
+export const CURRENT_VERSION = 2
 
 export function saveGame(state: CompanyState, slot = 'autosave'): void {
   try {
@@ -106,17 +116,41 @@ export function importSaveFromJson(jsonStr: string): CompanyState {
   return migrateSave(parsed)
 }
 
-function migrateSave(data: SaveData): CompanyState {
-  // Simple migration forward if needed
+export function migrateSave(data: SaveData): CompanyState {
   const state = data.game
-  if (!state.stateVersion) {
-    state.stateVersion = 1
-  }
   if (!state.eventQueue) {
     state.eventQueue = []
   }
   if (!state.eventCooldowns) {
     state.eventCooldowns = {}
   }
+
+  // Migrate to Version 2
+  if (!state.stateVersion || state.stateVersion < 2) {
+    state.playerRole = state.playerRole || 'developer'
+    state.playerAvatar = state.playerAvatar || createInitialAvatar(state.playerRole)
+    state.stage = state.stage || 'seed'
+    state.techDebt = state.techDebt ?? 15
+    state.velocity = state.velocity ?? 24
+    state.codeQuality = state.codeQuality ?? 78
+    state.testCoverage = state.testCoverage ?? 62
+    state.uptime = state.uptime ?? 99.8
+    state.culture = state.culture ?? 65
+    state.tickets = state.tickets || createInitialTickets()
+    state.sprint = state.sprint || createInitialSprint(state.day)
+    state.repo = state.repo || createInitialRepo()
+    state.prs = state.prs || createInitialPRs()
+    state.pipeline = state.pipeline || createInitialPipeline()
+    state.infra = state.infra || createInitialInfra()
+    state.gpuMarket = state.gpuMarket || createInitialGpuMarket()
+    state.gpuJobs = state.gpuJobs || []
+    state.suggestions = state.suggestions || createInitialSuggestions()
+    state.socialAccounts = state.socialAccounts || createInitialSocialAccounts()
+    state.socialPosts = state.socialPosts || createInitialSocialPosts()
+    state.growth = state.growth || createInitialGrowthFunnel()
+    state.stateVersion = 2
+  }
+
   return state
 }
+
