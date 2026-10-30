@@ -189,16 +189,16 @@ export function ExecutiveCommand() {
           <button
             onClick={() => handleExecute()}
             disabled={isLoading || (!directiveText.trim() && !lastResult)}
-            className="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-500/25 transition-all hover:from-blue-500 hover:to-indigo-500 hover:shadow-blue-500/40 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
+            className="btn-gold group relative flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
           >
             {isLoading ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin text-white" />
+                <Loader2 className="h-4 w-4 animate-spin text-[#181411]" />
                 <span>Consulting AI Board...</span>
               </>
             ) : (
               <>
-                <Sparkles className="h-4 w-4 text-blue-200 transition-transform group-hover:rotate-12" />
+                <Sparkles className="h-4 w-4 text-[#181411] transition-transform group-hover:rotate-12" />
                 <span>+ Execute Directive</span>
               </>
             )}

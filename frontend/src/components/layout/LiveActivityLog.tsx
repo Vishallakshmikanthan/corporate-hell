@@ -212,9 +212,9 @@ export function LiveActivityLog() {
                 <button
                   key={cat}
                   onClick={() => setFilter(cat)}
-                  className={`flex-1 rounded-lg py-1 capitalize transition ${
+                  className={`flex-1 rounded-lg py-1 capitalize transition cursor-pointer ${
                     isActive
-                      ? 'bg-blue-600 text-white shadow-sm'
+                      ? 'btn-gold shadow-sm'
                       : 'text-ink-400 hover:bg-ink-800 hover:text-paper-100'
                   }`}
                 >

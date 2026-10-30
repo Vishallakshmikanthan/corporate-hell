@@ -1,36 +1,75 @@
 /**
- * CORPORATE HELL™ — 2.5D Tactical Floorplan Fallback.
+ * CORPORATE HELL™ — 2.5D Pixel Art Office Diorama View.
  *
- * Ensures 100% playable simulation even when WebGL is unsupported or disabled.
- * Renders an architectural floor plan with animated employee tokens,
- * room divisions, and clickable desks.
+ * Implements a nostalgic isometric 2.5D office floor using the authentic
+ * reference diorama artwork (/reference/office_diorama.jpg) and animated
+ * reference character sprites (/reference/char_*.jpg) with pixelated UI tokens.
  */
 import { ROOMS, DESKS, type RoomDef } from '../game/engine/office'
 import { useGameStore } from '../state/gameStore'
-import { Users, AlertTriangle } from 'lucide-react'
+import { useUiStore } from '../state/uiStore'
+import { EMPLOYEE_REFERENCE_SPRITES } from './characters/EmployeeCharacter'
+import { Users, AlertTriangle, Video } from 'lucide-react'
 
-export function TacticalFallback() {
+interface Props {
+  onSwitchTo3D?: () => void
+}
+
+export function TacticalFallback({ onSwitchTo3D }: Props) {
   const employees = useGameStore((s) => s.state?.employees)
   const employeeOrder = useGameStore((s) => s.state?.employeeOrder || [])
   const selectedEmployeeId = useGameStore((s) => s.selectedEmployeeId)
   const selectEmployee = useGameStore((s) => s.selectEmployee)
   const focusRoom = useGameStore((s) => s.focusRoom)
   const equipment = useGameStore((s) => s.state?.equipment)
+  const inspectEmployee = useUiStore((s) => s.inspectEmployee)
 
-  // Map coordinate conversion [-11, 11] -> [5%, 95%], [-8, 8] -> [5%, 95%]
-  const toXPercent = (x: number) => `${((x + 11) / 22) * 90 + 5}%`
-  const toZPercent = (z: number) => `${((z + 8) / 16) * 90 + 5}%`
+  // Map coordinate conversion [-11, 11] -> [8%, 92%], [-8, 8] -> [12%, 88%]
+  const toXPercent = (x: number) => `${((x + 11) / 22) * 84 + 8}%`
+  const toZPercent = (z: number) => `${((z + 8) / 16) * 76 + 12}%`
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-ink-950 p-4 select-none">
-      <div className="absolute top-4 left-4 z-10 flex items-center gap-2 rounded-lg bg-ink-900/80 px-3 py-1.5 text-xs text-paper-200 border border-ink-700">
-        <Users className="h-4 w-4 text-corp-400" />
-        <span>Tactical 2.5D Office Overview (Accessible / Low-Power Mode)</span>
+    <div className="relative h-full w-full overflow-hidden bg-[#14121c] p-2 md:p-4 select-none font-mono crt-scanlines">
+      {/* Top Controls Header */}
+      <div className="absolute top-3 left-3 z-30 flex items-center gap-2">
+        <div className="flex items-center gap-2 bg-[#2a2838] px-3 py-1.5 border-2 border-[#14121c] shadow-[2px_2px_0px_#14121c] text-[#f4ecd8] text-xs font-bold uppercase">
+          <Users className="h-4 w-4 text-[#8fd3ff]" />
+          <span>2.5D Pixel Diorama Mode</span>
+        </div>
+
+        {onSwitchTo3D && (
+          <button
+            onClick={onSwitchTo3D}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#3e6ec0] hover:bg-[#4d80d9] text-white text-xs font-bold uppercase border-2 border-[#14121c] shadow-[2px_2px_0px_#14121c] cursor-pointer active:top-[1px]"
+          >
+            <Video className="h-3.5 w-3.5" />
+            <span>Switch to 3D View</span>
+          </button>
+        )}
       </div>
 
-      {/* Main Floor Grid Container */}
-      <div className="relative mx-auto h-[90%] w-full max-w-5xl rounded-2xl border border-ink-700 bg-ink-900 shadow-2xl overflow-hidden">
-        {/* Rooms as architectural zones */}
+      {/* Main Pixel Diorama Frame */}
+      <div className="relative mx-auto h-[94%] w-full max-w-6xl border-4 border-[#14121c] bg-[#1a1824] shadow-[8px_8px_0px_rgba(0,0,0,0.8)] overflow-hidden">
+        {/* Pixel Office Diorama Backdrop from Reference Folder */}
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-85 pointer-events-none"
+          style={{
+            backgroundImage: "url('/reference/office_diorama.jpg')",
+            imageRendering: 'pixelated',
+          }}
+        />
+
+        {/* Ambient Grid overlay */}
+        <div
+          className="absolute inset-0 opacity-20 pointer-events-none"
+          style={{
+            backgroundImage:
+              'radial-gradient(#8fd3ff 1px, transparent 1px), radial-gradient(#8fd3ff 1px, #14121c 1px)',
+            backgroundSize: '24px 24px',
+          }}
+        />
+
+        {/* Architectural Room Hitboxes */}
         {(Object.values(ROOMS) as RoomDef[]).map((room) => {
           const left = ((room.rect.cx - room.rect.hw + 11) / 22) * 100
           const top = ((room.rect.cz - room.rect.hd + 8) / 16) * 100
@@ -47,9 +86,10 @@ export function TacticalFallback() {
                 width: `${width}%`,
                 height: `${height}%`,
               }}
-              className="absolute cursor-pointer border border-ink-700/60 transition-colors hover:bg-ink-800/40 p-2 flex flex-col justify-between"
+              className="absolute cursor-pointer border border-[#8fd3ff]/20 hover:border-[#b6e52d]/60 hover:bg-[#b6e52d]/10 transition-colors p-2 flex flex-col justify-start z-10"
+              title={`Focus on ${room.label}`}
             >
-              <span className="text-[10px] font-semibold tracking-wider uppercase text-ink-400">
+              <span className="text-[10px] font-bold tracking-wider uppercase text-[#f4ecd8] drop-shadow-[1px_1px_0px_#14121c] bg-[#14121c]/80 px-1 py-0.5 w-fit border border-[#4b4a5e]">
                 {room.label}
               </span>
             </div>
@@ -60,7 +100,7 @@ export function TacticalFallback() {
         {equipment?.coffeeMachineBroken && (
           <div
             style={{ left: toXPercent(4.4), top: toZPercent(6.1) }}
-            className="absolute z-20 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 rounded bg-alert-500/90 px-1.5 py-0.5 text-[9px] font-bold text-white shadow animate-pulse"
+            className="absolute z-20 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 bg-[#d9453d] px-2 py-0.5 text-[9px] font-bold text-white border-2 border-[#14121c] shadow-[2px_2px_0px_#14121c] animate-pulse"
           >
             <AlertTriangle className="h-3 w-3" />
             <span>COFFEE BROKEN</span>
@@ -70,7 +110,7 @@ export function TacticalFallback() {
         {equipment?.serverRoomHot && (
           <div
             style={{ left: toXPercent(8.9), top: toZPercent(4.5) }}
-            className="absolute z-20 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 rounded bg-alert-500/90 px-1.5 py-0.5 text-[9px] font-bold text-white shadow animate-pulse"
+            className="absolute z-20 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 bg-[#d9453d] px-2 py-0.5 text-[9px] font-bold text-white border-2 border-[#14121c] shadow-[2px_2px_0px_#14121c] animate-pulse"
           >
             <AlertTriangle className="h-3 w-3" />
             <span>OVERHEATING</span>
@@ -82,15 +122,16 @@ export function TacticalFallback() {
           <div
             key={i}
             style={{ left: toXPercent(d.x), top: toZPercent(d.z) }}
-            className="absolute h-5 w-8 -translate-x-1/2 -translate-y-1/2 rounded border border-ink-600 bg-ink-800/60"
+            className="absolute h-5 w-8 -translate-x-1/2 -translate-y-1/2 border border-[#4b4a5e] bg-[#2a2838]/70 shadow-[1px_1px_0px_#14121c] z-10 pointer-events-none"
           />
         ))}
 
-        {/* Animated Employee Tokens */}
+        {/* Animated Employee Character Sprites from Reference */}
         {employeeOrder.map((id) => {
           const emp = employees?.[id]
           if (!emp || !emp.active) return null
           const isSelected = selectedEmployeeId === emp.id
+          const spriteImg = EMPLOYEE_REFERENCE_SPRITES[emp.id] || '/reference/char_graphic_tee.jpg'
 
           return (
             <div
@@ -98,28 +139,33 @@ export function TacticalFallback() {
               onClick={(e) => {
                 e.stopPropagation()
                 selectEmployee(emp.id)
+                inspectEmployee(emp.id)
               }}
               style={{
                 left: toXPercent(emp.position.x),
                 top: toZPercent(emp.position.z),
                 transition: 'left 0.4s ease-out, top 0.4s ease-out',
               }}
-              className={`absolute z-30 -translate-x-1/2 -translate-y-1/2 cursor-pointer flex flex-col items-center group`}
+              className="absolute z-30 -translate-x-1/2 -translate-y-1/2 cursor-pointer flex flex-col items-center group pointer-events-auto select-none"
             >
-              {/* Token Avatar Pin */}
+              {/* Employee Sprite Avatar Pin with Reference Image */}
               <div
-                style={{ backgroundColor: emp.visual.outfit }}
-                className={`flex h-6 w-6 items-center justify-center rounded-full border-2 text-[10px] font-bold text-white shadow-lg transition-transform group-hover:scale-125 ${
+                className={`relative h-10 w-10 border-2 overflow-hidden shadow-[2px_2px_0px_#14121c] transition-transform group-hover:scale-125 ${
                   isSelected
-                    ? 'border-acid-400 scale-125 ring-2 ring-acid-400/50'
-                    : 'border-ink-950'
+                    ? 'border-[#fabc3c] scale-125 ring-2 ring-[#fabc3c]'
+                    : 'border-[#14121c] bg-[#2a2838]'
                 }`}
               >
-                {emp.name.charAt(0)}
+                <img
+                  src={spriteImg}
+                  alt={emp.name}
+                  className="h-full w-full object-cover"
+                  style={{ imageRendering: 'pixelated' }}
+                />
               </div>
 
-              {/* Name Tag */}
-              <div className="mt-1 rounded bg-ink-950/80 px-1 py-0.2 text-[9px] font-medium text-paper-200 whitespace-nowrap shadow border border-ink-800">
+              {/* Pixel Name Tag */}
+              <div className="mt-1 bg-[#14121c] px-1.5 py-0.2 text-[9px] font-bold text-[#f4ecd8] border border-[#4b4a5e] shadow-[1px_1px_0px_#14121c] whitespace-nowrap">
                 {emp.name.split(' ')[0]}
               </div>
             </div>

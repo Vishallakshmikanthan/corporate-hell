@@ -64,10 +64,10 @@ export function FloatingEmployeesPanel() {
       return { label: 'At Pantry', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', dot: 'bg-emerald-400' }
     }
     if (emp.action === 'break') {
-      return { label: 'On Break', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', dot: 'bg-blue-400' }
+      return { label: 'On Break', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30', dot: 'bg-amber-400' }
     }
     if (emp.id === 'emp_bianca') {
-      return { label: 'At Printer', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', dot: 'bg-blue-400' }
+      return { label: 'At Printer', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30', dot: 'bg-amber-400' }
     }
     return { label: 'Working', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', dot: 'bg-emerald-400' }
   }
@@ -116,10 +116,13 @@ export function FloatingEmployeesPanel() {
               return (
                 <div
                   key={emp.id}
-                  onClick={() => selectEmployee(emp.id)}
+                  onClick={() => {
+                    selectEmployee(emp.id)
+                    setDossierOpen(true)
+                  }}
                   className={`group relative flex items-center justify-between rounded-xl p-2.5 cursor-pointer border transition-all ${
                     isSelected
-                      ? 'border-blue-500 bg-blue-950/30 shadow-md shadow-blue-500/10'
+                      ? 'border-[#d4a84f] bg-[#d4a84f]/15 shadow-md'
                       : 'border-ink-800/80 bg-ink-900/60 hover:border-ink-700 hover:bg-ink-850/80'
                   }`}
                 >
