@@ -1,0 +1,194 @@
+/**
+ * CORPORATE HELL™ — CH-16 Pixel Design System Tokens.
+ *
+ * Authentic 8/16-bit pixel aesthetic:
+ * - CH-16 Color Palette
+ * - Stepped pixel bevels (no CSS blur, no rounded corners)
+ * - Integer-scaled pixel rendering
+ * - Authentic scanlines & CRT monitor effects
+ */
+
+:root {
+  /* CH-16 Core Palette */
+  --ch-ink: #14121c;
+  --ch-charcoal: #2a2838;
+  --ch-slate: #4b4a5e;
+  --ch-fog: #8c8aa0;
+  --ch-cream: #f4ecd8;
+  --ch-cream-dark: #ded2b6;
+  --ch-wood-light: #c58a55;
+  --ch-wood-dark: #7a4a2d;
+  --ch-corp-blue: #3e6ec0;
+  --ch-corp-blue-dark: #274782;
+  --ch-sky: #8fd3ff;
+  --ch-toxic-lime: #b6e52d;
+  --ch-toxic-lime-dark: #7a9c17;
+  --ch-amber: #f2a93b;
+  --ch-alert-red: #d9453d;
+  --ch-plant-green: #3f8f4e;
+  --ch-purple: #8b5cf6;
+
+  /* Typography */
+  --font-pixel-heading: "Silkscreen", "Press Start 2P", monospace;
+  --font-pixel-body: "Pixelify Sans", "VT323", monospace;
+  --font-pixel-readable: "Inter Variable", system-ui, sans-serif;
+}
+
+/* Global pixel rendering classes */
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Pixel Box Frames (2px / 3px retro beveled borders without blur) */
+.pixel-box-raised {
+  background-color: var(--ch-charcoal);
+  border: 2px solid var(--ch-ink);
+  box-shadow:
+    inset 2px 2px 0px 0px rgba(255, 255, 255, 0.16),
+    inset -2px -2px 0px 0px rgba(0, 0, 0, 0.45);
+}
+
+.pixel-box-inset {
+  background-color: var(--ch-ink);
+  border: 2px solid var(--ch-slate);
+  box-shadow:
+    inset 2px 2px 0px 0px rgba(0, 0, 0, 0.7),
+    inset -1px -1px 0px 0px rgba(255, 255, 255, 0.1);
+}
+
+.pixel-box-cream {
+  background-color: var(--ch-cream);
+  color: var(--ch-ink);
+  border: 2px solid var(--ch-ink);
+  box-shadow:
+    inset 2px 2px 0px 0px #ffffff,
+    inset -2px -2px 0px 0px var(--ch-cream-dark);
+}
+
+.pixel-box-window {
+  background-color: var(--ch-charcoal);
+  border: 3px solid var(--ch-ink);
+  box-shadow:
+    4px 4px 0px 0px rgba(0, 0, 0, 0.75),
+    inset 2px 2px 0px 0px var(--ch-slate),
+    inset -2px -2px 0px 0px #110f17;
+}
+
+/* Authentic Pixel Titlebar */
+.pixel-titlebar {
+  background: var(--ch-corp-blue);
+  color: #ffffff;
+  border-bottom: 2px solid var(--ch-ink);
+  font-family: var(--font-pixel-heading);
+  text-shadow: 1px 1px 0px var(--ch-ink);
+}
+
+/* Pixel Buttons with tactile 1px step down */
+.pixel-btn {
+  position: relative;
+  font-family: var(--font-pixel-heading);
+  text-transform: uppercase;
+  border: 2px solid var(--ch-ink);
+  padding: 6px 12px;
+  cursor: pointer;
+  user-select: none;
+  background-color: var(--ch-slate);
+  color: var(--ch-cream);
+  box-shadow:
+    inset 2px 2px 0px 0px rgba(255, 255, 255, 0.25),
+    inset -2px -2px 0px 0px rgba(0, 0, 0, 0.5),
+    2px 2px 0px 0px var(--ch-ink);
+  transition: none;
+}
+
+.pixel-btn:hover {
+  filter: brightness(1.1);
+}
+
+.pixel-btn:active {
+  top: 2px;
+  left: 2px;
+  box-shadow:
+    inset 2px 2px 0px 0px rgba(0, 0, 0, 0.6),
+    0px 0px 0px 0px var(--ch-ink);
+}
+
+.pixel-btn-primary {
+  background-color: var(--ch-corp-blue);
+  color: #ffffff;
+}
+
+.pixel-btn-lime {
+  background-color: var(--ch-toxic-lime);
+  color: var(--ch-ink);
+}
+
+.pixel-btn-amber {
+  background-color: var(--ch-amber);
+  color: var(--ch-ink);
+}
+
+.pixel-btn-danger {
+  background-color: var(--ch-alert-red);
+  color: #ffffff;
+}
+
+.pixel-btn-cream {
+  background-color: var(--ch-cream);
+  color: var(--ch-ink);
+}
+
+/* CRT Scanlines and Screen Glass Overlay (non-blocking) */
+.crt-scanlines {
+  position: relative;
+}
+
+.crt-scanlines::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.22) 50%
+  );
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 999;
+}
+
+/* Pixel Segmented Bar Meter */
+.pixel-meter-segment {
+  width: 7px;
+  height: 12px;
+  border: 1px solid var(--ch-ink);
+}
+
+/* Retro Pixel Font Classes */
+.font-pixel-title {
+  font-family: var(--font-pixel-heading);
+  letter-spacing: 0.05em;
+}
+
+.font-pixel-body {
+  font-family: var(--font-pixel-body);
+  letter-spacing: 0.02em;
+}
+
+/* Crisp Scrollbars */
+.pixel-scrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.pixel-scrollbar::-webkit-scrollbar-track {
+  background: var(--ch-ink);
+  border: 1px solid var(--ch-charcoal);
+}
+.pixel-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--ch-slate);
+  border: 2px solid var(--ch-ink);
+  box-shadow: inset 1px 1px 0px rgba(255, 255, 255, 0.3);
+}
