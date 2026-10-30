@@ -58,18 +58,20 @@ export function LaunchScreen() {
       {/* Hero Container */}
       <div className="relative z-10 flex w-full max-w-2xl flex-col items-center text-center">
         {/* Satirical Badge */}
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-corp-500/40 bg-corp-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-corp-300 backdrop-blur">
-          <Flame className="h-3.5 w-3.5 text-warn-400" />
-          <span>Absurdly Realistic 3D Chaos Simulator</span>
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#d4a84f]/40 bg-[#d4a84f]/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-widest text-[#e5c478] backdrop-blur">
+          <Flame className="h-3.5 w-3.5 text-[#d4a84f]" />
+          <span>Executive AI & 3D Corporate World Simulation</span>
         </div>
 
         {/* Main Logo */}
-        <h1 className="font-display text-5xl font-black tracking-tight sm:text-7xl">
-          CORPORATE HELL<span className="align-super text-xl text-acid-400">™</span>
+        <h1 className="font-serif-title text-5xl font-bold tracking-wider sm:text-7xl">
+          <span className="text-[#faf7f0]">CORPORATE </span>
+          <span className="text-[#d4a84f]">HELL</span>
+          <span className="align-super text-xl text-[#b5a695] font-sans">™</span>
         </h1>
 
         {/* Tagline */}
-        <p className="mt-4 max-w-md text-base text-paper-200/80 sm:text-lg">
+        <p className="mt-4 max-w-md text-base text-[#d8cdc0] sm:text-lg">
           “Synergy is mandatory. Sanity is strictly optional.”
         </p>
 
@@ -77,7 +79,7 @@ export function LaunchScreen() {
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
           <button
             onClick={handleStartStandard}
-            className="flex items-center gap-2 rounded-xl bg-corp-500 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-corp-500/25 transition hover:bg-corp-600 hover:scale-105 active:scale-95"
+            className="btn-gold flex items-center gap-2 rounded-xl px-7 py-3.5 text-base font-bold cursor-pointer"
           >
             <Play className="h-5 w-5 fill-current" />
             <span>New Game</span>
