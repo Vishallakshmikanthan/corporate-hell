@@ -18,6 +18,15 @@ import { saveGame, loadGame } from '../game/persistence/storage'
 
 export type NavTab =
   | 'office'
+  | 'pitch'
+  | 'kanban'
+  | 'repo'
+  | 'pipeline'
+  | 'cloud'
+  | 'gpu'
+  | 'social'
+  | 'warroom'
+  | 'growth'
   | 'employees'
   | 'departments'
   | 'finance'
@@ -28,6 +37,8 @@ export type NavTab =
 
 export type GamePhase = 'launch' | 'setup' | 'playing'
 export type GraphicsQuality = 'high' | 'medium' | 'low'
+export type PhoneApp = 'slackk' | 'gitbub' | 'awsome' | 'chirper' | 'tickets' | 'calendar'
+export type MiniGameType = 'code_review' | 'merge_conflict' | 'ci_log' | 'postmortem' | 'pitch' | 'ping_pong'
 
 interface GameStore {
   phase: GamePhase
@@ -43,7 +54,12 @@ interface GameStore {
   graphicsQuality: GraphicsQuality
   isEndOfDayModalOpen: boolean
   isSettingsModalOpen: boolean
+  isSaveLoadModalOpen: boolean
   isDossierOpen: boolean
+  isPhoneOpen: boolean
+  activePhoneApp: PhoneApp
+  activeMiniGame: MiniGameType | null
+  activeMiniGameData: any
   lastEventMessage: string | null
 
   // Actions
@@ -56,6 +72,10 @@ interface GameStore {
   setSimSpeed: (speed: number) => void
   selectEmployee: (id: string | null) => void
   setDossierOpen: (open: boolean) => void
+  setPhoneOpen: (open: boolean) => void
+  setActivePhoneApp: (app: PhoneApp) => void
+  openMiniGame: (type: MiniGameType, data?: any) => void
+  closeMiniGame: () => void
   focusRoom: (roomId: RoomId | null) => void
   setActiveTab: (tab: NavTab) => void
   dispatch: (action: PlayerAction) => ActionResult
@@ -64,6 +84,7 @@ interface GameStore {
   toggleAudioMute: () => void
   setAudioVolume: (volume: number) => void
   setSettingsModalOpen: (open: boolean) => void
+  setSaveLoadModalOpen: (open: boolean) => void
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -80,7 +101,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   graphicsQuality: 'high',
   isEndOfDayModalOpen: false,
   isSettingsModalOpen: false,
+  isSaveLoadModalOpen: false,
   isDossierOpen: false,
+  isPhoneOpen: false,
+  activePhoneApp: 'tickets',
+  activeMiniGame: null,
+  activeMiniGameData: null,
   lastEventMessage: null,
 
   setPhase: (phase) => set({ phase }),
@@ -206,6 +232,26 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ isDossierOpen: open })
   },
 
+  setPhoneOpen: (open) => {
+    audio.playClick()
+    set({ isPhoneOpen: open })
+  },
+
+  setActivePhoneApp: (app) => {
+    audio.playClick()
+    set({ activePhoneApp: app })
+  },
+
+  openMiniGame: (type, data) => {
+    audio.playClick()
+    set({ activeMiniGame: type, activeMiniGameData: data })
+  },
+
+  closeMiniGame: () => {
+    audio.playClick()
+    set({ activeMiniGame: null, activeMiniGameData: null })
+  },
+
   focusRoom: (roomId) => {
     if (roomId) audio.playClick()
     set({ focusedRoomId: roomId })
@@ -254,5 +300,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setSettingsModalOpen: (open) => {
     audio.playClick()
     set({ isSettingsModalOpen: open })
+  },
+
+  setSaveLoadModalOpen: (open) => {
+    audio.playClick()
+    set({ isSaveLoadModalOpen: open })
   },
 }))

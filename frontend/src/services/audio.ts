@@ -48,6 +48,18 @@ class AudioService {
     return this.volume
   }
 
+  public playBuzzer() {
+    this.playAlert()
+  }
+
+  public playDing() {
+    this.playChime()
+  }
+
+  public playFanfare() {
+    this.playCelebration()
+  }
+
   /** Subtle UI click tone */
   public playClick() {
     if (this.muted) return
@@ -220,6 +232,130 @@ class AudioService {
 
     osc.start(t)
     osc.stop(t + 0.3)
+  }
+
+  /** Retro CorpOS Computer Boot Blip */
+  public playBoot() {
+    if (this.muted) return
+    this.initContext()
+    if (!this.ctx || !this.masterGain) return
+
+    const t = this.ctx.currentTime
+    const freqs = [330, 440, 554.37, 659.25, 880]
+    freqs.forEach((freq, idx) => {
+      const osc = this.ctx!.createOscillator()
+      const gain = this.ctx!.createGain()
+      const startTime = t + idx * 0.05
+
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(freq, startTime)
+
+      gain.gain.setValueAtTime(0.12, startTime)
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3)
+
+      osc.connect(gain)
+      gain.connect(this.masterGain!)
+
+      osc.start(startTime)
+      osc.stop(startTime + 0.3)
+    })
+  }
+
+  /** Satisfying mechanical switch / lever toggle */
+  public playLever() {
+    if (this.muted) return
+    this.initContext()
+    if (!this.ctx || !this.masterGain) return
+
+    const t = this.ctx.currentTime
+    const osc = this.ctx.createOscillator()
+    const gain = this.ctx.createGain()
+
+    osc.type = 'square'
+    osc.frequency.setValueAtTime(120, t)
+    osc.frequency.exponentialRampToValueAtTime(60, t + 0.06)
+
+    gain.gain.setValueAtTime(0.2, t)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06)
+
+    osc.connect(gain)
+    gain.connect(this.masterGain)
+
+    osc.start(t)
+    osc.stop(t + 0.06)
+  }
+
+  /** Sticky note thud / Kanban stamp */
+  public playStamp() {
+    if (this.muted) return
+    this.initContext()
+    if (!this.ctx || !this.masterGain) return
+
+    const t = this.ctx.currentTime
+    const osc = this.ctx.createOscillator()
+    const gain = this.ctx.createGain()
+
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(180, t)
+    osc.frequency.exponentialRampToValueAtTime(50, t + 0.08)
+
+    gain.gain.setValueAtTime(0.25, t)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08)
+
+    osc.connect(gain)
+    gain.connect(this.masterGain)
+
+    osc.start(t)
+    osc.stop(t + 0.08)
+  }
+
+  /** Spark / short circuit / outage zap */
+  public playZap() {
+    if (this.muted) return
+    this.initContext()
+    if (!this.ctx || !this.masterGain) return
+
+    const t = this.ctx.currentTime
+    const osc = this.ctx.createOscillator()
+    const gain = this.ctx.createGain()
+
+    osc.type = 'sawtooth'
+    osc.frequency.setValueAtTime(600, t)
+    osc.frequency.setValueAtTime(120, t + 0.04)
+    osc.frequency.setValueAtTime(450, t + 0.08)
+
+    gain.gain.setValueAtTime(0.18, t)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15)
+
+    osc.connect(gain)
+    gain.connect(this.masterGain)
+
+    osc.start(t)
+    osc.stop(t + 0.15)
+  }
+
+  /** Dolly / zoom whoosh */
+  public playWhoosh() {
+    if (this.muted) return
+    this.initContext()
+    if (!this.ctx || !this.masterGain) return
+
+    const t = this.ctx.currentTime
+    const osc = this.ctx.createOscillator()
+    const gain = this.ctx.createGain()
+
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(150, t)
+    osc.frequency.exponentialRampToValueAtTime(500, t + 0.12)
+
+    gain.gain.setValueAtTime(0.1, t)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15)
+
+    osc.connect(gain)
+    gain.connect(this.masterGain)
+
+    osc.start(t)
+    osc.stop(t + 0.15)
   }
 }
 
