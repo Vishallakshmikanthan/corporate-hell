@@ -7,16 +7,45 @@
 import React from 'react'
 import { useUiStore } from '../state/uiStore'
 import { useGameStore } from '../state/gameStore'
+import { useGamificationStore } from '../state/gamificationStore'
 import { APP_REGISTRY, AppDefinition } from './appRegistry'
+import { PixelAppIcon } from '../ui/pixel/PixelAppIcon'
 import { WindowManager } from './WindowManager'
 import { Dock } from './Dock'
 import { audio } from '../services/audio'
 
+const APP_UNLOCK_DAY: Record<string, number> = {
+  kanban: 1,
+  gitbub: 1,
+  chirper: 1,
+  launch: 1,
+  mail: 1,
+  team: 2,
+  pipeline: 2,
+  pager: 2,
+  awsome: 3,
+  investors: 3,
+  directive: 3,
+  talent: 4,
+  forge: 4,
+  nvidiot: 5,
+}
+
 export const Desktop: React.FC = () => {
   const openApp = useUiStore((s) => s.openApp)
+  const pushToast = useUiStore((s) => s.pushToast)
   const state = useGameStore((s) => s.state)
+  const sandboxUnlockAll = useGamificationStore((s) => s.sandboxUnlockAll)
+  const toggleSandboxUnlockAll = useGamificationStore((s) => s.toggleSandboxUnlockAll)
 
   const currentStage = state?.stage || 'Seed'
+  const currentDay = state?.day || 1
+
+  const isAppUnlocked = (app: AppDefinition) => {
+    if (sandboxUnlockAll) return true
+    const reqDay = APP_UNLOCK_DAY[app.id] ?? 1
+    return currentDay >= reqDay
+  }
 
   // Wallpaper styling based on stage progression
   const wallpaperStyle: Record<string, string> = {
@@ -30,9 +59,14 @@ export const Desktop: React.FC = () => {
   const currentWallpaper = wallpaperStyle[currentStage] || 'bg-[#1e1c2b]'
 
   const handleIconClick = (app: AppDefinition) => {
-    // Check unlock requirements
-    if (app.unlockStage && currentStage === 'garage' && app.unlockStage !== 'garage') {
+    if (!isAppUnlocked(app)) {
+      const reqDay = APP_UNLOCK_DAY[app.id] ?? 2
       audio.playAlert()
+      pushToast({
+        title: `${app.title} Locked`,
+        description: `Unlocks automatically on Day ${reqDay} — or toggle "Unlock All" in the top bar!`,
+        severity: 'warn',
+      })
       return
     }
     openApp(app.id)
@@ -71,18 +105,31 @@ export const Desktop: React.FC = () => {
           <span>⚡</span>
           <span>APPS:</span>
         </span>
-        {APP_REGISTRY.map((app) => (
+        {APP_REGISTRY.filter((app) => isAppUnlocked(app)).map((app) => (
           <button
             key={app.id}
             type="button"
             onClick={() => openApp(app.id)}
-            className="flex items-center gap-1 px-2 py-0.5 bg-[#14121c] hover:bg-[#3e6ec0] text-[#f4ecd8] hover:text-white border border-[#4b4a5e] hover:border-[#b6e52d] text-[11px] font-bold cursor-pointer shrink-0 active:translate-y-[1px] transition-none"
+            className="flex items-center gap-1.5 px-2 py-0.5 bg-[#14121c] hover:bg-[#3e6ec0] text-[#f4ecd8] hover:text-white border border-[#4b4a5e] hover:border-[#b6e52d] text-[11px] font-bold cursor-pointer shrink-0 active:translate-y-[1px] transition-none"
             title={`Open ${app.title} - ${app.description}`}
           >
-            <span className="text-xs">{app.icon}</span>
+            <PixelAppIcon appId={app.id} size={14} />
             <span>{app.title}</span>
           </button>
         ))}
+
+        <button
+          type="button"
+          onClick={toggleSandboxUnlockAll}
+          className={`ml-auto px-2 py-0.5 text-[10px] font-bold uppercase border cursor-pointer shrink-0 ${
+            sandboxUnlockAll
+              ? 'bg-[#b6e52d] text-[#14121c] border-[#14121c]'
+              : 'bg-[#2a2838] text-[#8fd3ff] border-[#4b4a5e] hover:bg-[#3e6ec0] hover:text-white'
+          }`}
+          title="Toggle progressive day unlocks vs all 14 apps unlocked"
+        >
+          {sandboxUnlockAll ? '🔓 All Unlocked' : '🔒 Progressive Mode'}
+        </button>
       </div>
 
       {/* ----------------------------------------------------------- */}
@@ -90,24 +137,36 @@ export const Desktop: React.FC = () => {
       {/* ----------------------------------------------------------- */}
       <div className="relative z-10 flex flex-col flex-wrap gap-4 p-5 max-h-[calc(100vh-120px)] w-fit pointer-events-auto">
         {APP_REGISTRY.map((app) => {
-          const badgeValue = app.badge ? app.badge(state) : null
+          const unlocked = isAppUnlocked(app)
+          const reqDay = APP_UNLOCK_DAY[app.id] ?? 1
+          const badgeValue = unlocked && app.badge ? app.badge(state) : null
 
           return (
             <button
               key={app.id}
               type="button"
               onClick={() => handleIconClick(app)}
-              className="relative flex flex-col items-center justify-center w-20 p-2 rounded-none cursor-pointer select-none group text-center border border-transparent hover:border-[#8fd3ff]/40 hover:bg-[#3e6ec0]/20 active:bg-[#3e6ec0]/40 transition-none pointer-events-auto"
+              className={`relative flex flex-col items-center justify-center w-20 p-2 rounded-none cursor-pointer select-none group text-center border border-transparent transition-none pointer-events-auto ${
+                unlocked
+                  ? 'hover:border-[#8fd3ff]/40 hover:bg-[#3e6ec0]/20 active:bg-[#3e6ec0]/40'
+                  : 'opacity-45 hover:opacity-70'
+              }`}
             >
               {/* Icon Container with Badge */}
               <div className="relative flex items-center justify-center w-12 h-12 bg-[#2a2838] border-2 border-[#14121c] shadow-[2px_2px_0px_#14121c] group-hover:border-[#b6e52d] group-hover:scale-105 transition-none">
-                <span className="text-2xl">{app.icon}</span>
+                <PixelAppIcon appId={app.id} size={28} />
 
-                {/* Live Notification Badge */}
-                {badgeValue && (
-                  <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-none bg-[#d9453d] text-white text-[9px] font-bold border border-[#14121c] flex items-center justify-center shadow-[1px_1px_0px_#14121c]">
-                    {badgeValue}
+                {/* Live Notification Badge or Lock Badge */}
+                {!unlocked ? (
+                  <span className="absolute -top-1.5 -right-2 px-1 h-4 bg-[#14121c] text-[#f2a93b] text-[8px] font-bold border border-[#f2a93b] flex items-center justify-center">
+                    D{reqDay}🔒
                   </span>
+                ) : (
+                  badgeValue && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-none bg-[#d9453d] text-white text-[9px] font-bold border border-[#14121c] flex items-center justify-center shadow-[1px_1px_0px_#14121c]">
+                      {badgeValue}
+                    </span>
+                  )
                 )}
               </div>
 

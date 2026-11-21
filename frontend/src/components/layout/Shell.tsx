@@ -5,8 +5,13 @@
  * Left Navigation Rail, Center 3D Viewport / Sub-views, Right Contextual
  * Inspector, Bottom Timeline, Modals, and the master fixed simulation clock.
  */
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useGameStore } from '../../state/gameStore'
+import { useGamificationStore } from '../../state/gamificationStore'
+import { checkProximityInteractable } from '../../game/engine/avatar'
+import { GameJuiceOverlay } from '../../hud/GameJuiceOverlay'
+import { PerkDraftModal } from '../modals/PerkDraftModal'
+import { LaunchReviewModal } from '../modals/LaunchReviewModal'
 import { LaunchScreen } from '../views/LaunchScreen'
 import { SetupScreen } from '../views/SetupScreen'
 import { TopCommandBar } from './TopCommandBar'
@@ -60,6 +65,15 @@ export function Shell() {
 
   const v3Enabled = useUiStore((s) => s.v3Enabled)
   const currentChapter = useGameStore((s) => s.state?.career?.currentChapter || 'bedroom')
+  const screenShakeTrigger = useGamificationStore((s) => s.screenShakeTrigger)
+  const [isShaking, setIsShaking] = useState(false)
+
+  useEffect(() => {
+    if (screenShakeTrigger === 0) return
+    setIsShaking(true)
+    const t = setTimeout(() => setIsShaking(false), 240)
+    return () => clearTimeout(t)
+  }, [screenShakeTrigger])
 
   // Simulation Fixed Tick Loop
   useEffect(() => {
@@ -90,11 +104,16 @@ export function Shell() {
         setPhoneOpen(!isPhoneOpen)
       } else if (e.key === 'e' || e.key === 'E') {
         e.preventDefault()
-        const focus = useUiStore.getState().focus
-        if (focus === 'laptop') {
-          useUiStore.getState().closeLaptop()
+        const ui = useUiStore.getState()
+        if (ui.focus === 'laptop') {
+          ui.closeLaptop()
         } else {
-          useUiStore.getState().openLaptop()
+          // Avoid conflicting with nearby 3D props (coffee machine / ping pong)
+          const pos = useGameStore.getState().state?.playerAvatar?.position
+          const nearProp = pos ? checkProximityInteractable(pos) : null
+          if (!nearProp || nearProp.id === 'player_desk' || nearProp.id === 'ceo_desk') {
+            ui.openLaptop()
+          }
         }
       } else if (e.key === '1') {
         setSimSpeed(1)
@@ -149,7 +168,11 @@ export function Shell() {
   // V3 Pixel-Art Production-Ready UI Flow (Section 3)
   if (v3Enabled) {
     return (
-      <div className="relative h-screen w-screen overflow-hidden bg-[#14121c] select-none font-mono">
+      <div
+        className={`relative h-screen w-screen overflow-hidden bg-[#14121c] select-none font-mono ${
+          isShaking ? 'translate-x-[2px] -translate-y-[2px]' : ''
+        } transition-transform duration-75`}
+      >
         {/* Full-Screen 3D Career Chapter Viewport */}
         <main className="absolute inset-0 z-0">
           {currentChapter === 'bedroom' && <BedroomScene />}
@@ -163,6 +186,9 @@ export function Shell() {
         {/* Minimalist World HUD (corners only, ~10% screen) */}
         <WorldHud />
 
+        {/* Game Juice Layer (Floating Numbers, Combo Meter, Pixel Confetti) */}
+        <GameJuiceOverlay />
+
         {/* CorpOS Laptop Overlay [E] */}
         <Laptop />
 
@@ -172,6 +198,8 @@ export function Shell() {
 
         {/* Modal Dialogs */}
         <EndOfDayModal />
+        <PerkDraftModal />
+        <LaunchReviewModal />
         <SettingsModal />
       </div>
     )
@@ -224,8 +252,13 @@ export function Shell() {
       <PhoneOverlay />
       <MiniGamesOverlay />
 
+      {/* Game Juice Layer */}
+      <GameJuiceOverlay />
+
       {/* Modal Dialogs */}
       <EndOfDayModal />
+      <PerkDraftModal />
+      <LaunchReviewModal />
       <SettingsModal />
       {isSaveLoadModalOpen && <SaveLoadModal onClose={() => setSaveLoadModalOpen(false)} />}
     </div>

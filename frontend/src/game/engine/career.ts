@@ -423,6 +423,8 @@ export function evaluateChapterProgress(state: CompanyState): void {
  */
 export function advanceCareerChapter(state: CompanyState, nextChapter: CareerChapterId): boolean {
   if (!state.career) return false
+  // Always sync objective completion flags immediately before checking eligibility
+  evaluateChapterProgress(state)
   const career = state.career
   const allDone = career.objectives.every((o) => o.completed)
   if (!allDone && !career.unlockedChapters.includes(nextChapter)) {

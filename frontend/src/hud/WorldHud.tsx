@@ -5,9 +5,10 @@
  * World occupies ~90% of screen. Only diegetic chips and minimal corners remain.
  */
 import React, { useState } from 'react'
-import { Play, Pause, FastForward, Laptop, Phone, Volume2, VolumeX, Sparkles, MapPin, Save, Hammer, Building2, Gavel, Bell } from 'lucide-react'
+import { Play, Pause, FastForward, Laptop, Phone, Volume2, VolumeX, Sparkles, MapPin, Save, Hammer, Building2, Gavel, Bell, Rocket, Zap } from 'lucide-react'
 import { useGameStore } from '../state/gameStore'
 import { useUiStore } from '../state/uiStore'
+import { useGamificationStore } from '../state/gamificationStore'
 import { PixelBar } from '../ui/pixel/PixelBar'
 import { PixelToastContainer } from '../ui/pixel/PixelToast'
 import { PixelIdCard } from '../ui/pixel/PixelIdCard'
@@ -38,6 +39,15 @@ export const WorldHud: React.FC = () => {
   const mascotTip = useUiStore((s) => s.mascotTip)
   const setMascotTip = useUiStore((s) => s.setMascotTip)
   const pushToast = useUiStore((s) => s.pushToast)
+
+  const productCharge = useGamificationStore((s) => s.productCharge)
+  const activeBubblesCount = useGamificationStore((s) => s.activeBubbles.length)
+  const collectAllBubbles = useGamificationStore((s) => s.collectAllBubbles)
+  const activePerks = useGamificationStore((s) => s.activePerks)
+  const currentAudit = useGamificationStore((s) => s.currentAudit)
+  const launchesCompleted = useGamificationStore((s) => s.launchesCompleted)
+  const openLaunchModal = useGamificationStore((s) => s.openLaunchModal)
+  const openPerkDraft = useGamificationStore((s) => s.openPerkDraft)
 
   const [showSaveLoad, setShowSaveLoad] = useState(false)
   const [showBuilder, setShowBuilder] = useState(false)
@@ -144,9 +154,8 @@ export const WorldHud: React.FC = () => {
             {/* Play/Pause Button */}
             <button
               onClick={() => setPlaying(!isPlaying)}
-              className={`p-1 border border-[#14121c] shadow-[1px_1px_0px_#14121c] ${
-                isPlaying ? 'bg-[#b6e52d] text-[#14121c]' : 'bg-[#f2a93b] text-[#14121c]'
-              }`}
+              className={`p-1 border border-[#14121c] shadow-[1px_1px_0px_#14121c] ${isPlaying ? 'bg-[#b6e52d] text-[#14121c]' : 'bg-[#f2a93b] text-[#14121c]'
+                }`}
               title="Spacebar: Play/Pause"
             >
               {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
@@ -158,11 +167,10 @@ export const WorldHud: React.FC = () => {
                 <button
                   key={speed}
                   onClick={() => setSimSpeed(speed)}
-                  className={`px-1.5 py-0.5 text-[10px] font-bold border border-[#14121c] shadow-[1px_1px_0px_#14121c] ${
-                    simSpeed === speed
+                  className={`px-1.5 py-0.5 text-[10px] font-bold border border-[#14121c] shadow-[1px_1px_0px_#14121c] ${simSpeed === speed
                       ? 'bg-[#3e6ec0] text-white'
                       : 'bg-[#2a2838] text-[#ded2b6] hover:bg-[#4b4a5e]'
-                  }`}
+                    }`}
                 >
                   {speed}x
                 </button>
@@ -200,29 +208,125 @@ export const WorldHud: React.FC = () => {
         </div>
 
         {/* --------------------------------------------------------- */}
-        {/* OPTIONAL MASCOT TIP: "Synergy" from reference/mascot_clawd.jpg */}
+        {/* LEFT STACK: Pinned Board Audit + Launch Charge + Active Perks */}
         {/* --------------------------------------------------------- */}
-        {mascotTip && (
-          <div className="pointer-events-auto self-start flex items-end gap-2 bg-[#14121c]/95 p-2 border-2 border-[#b6e52d] shadow-[4px_4px_0px_#14121c] max-w-sm ml-2 animate-slide-up">
-            <img
-              src="/reference/mascot_clawd.jpg"
-              alt="Synergy Mascot"
-              className="w-10 h-10 object-contain pixelated shrink-0 border border-[#14121c] bg-[#c58a55]/20"
-            />
-            <div className="flex flex-col text-[11px] text-[#f4ecd8] overflow-hidden">
-              <span className="font-bold text-[#b6e52d] uppercase text-[9px]">
-                Synergy the Mascot:
-              </span>
-              <p className="leading-tight">{mascotTip}</p>
+        <div className="flex flex-col items-start gap-2 my-auto">
+          {/* Pinned Next Objective & Board Audit Tracker */}
+          <div className="pointer-events-auto bg-[#14121c]/92 border-2 border-[#4b4a5e] shadow-[4px_4px_0px_#14121c] p-2.5 w-64">
+            <div className="flex items-center justify-between text-[9px] uppercase font-bold mb-1">
+              <span className="text-[#f2a93b]">🎯 {currentAudit.title}</span>
+              <span className="text-[#8fd3ff]">Day {day} / {currentAudit.dueDay}</span>
             </div>
-            <button
-              onClick={() => setMascotTip(null)}
-              className="text-[#8c8aa0] hover:text-white text-xs px-1"
-            >
-              ✕
-            </button>
+            <div className="text-[10px] text-[#f4ecd8] mb-2 leading-tight">
+              Goal: <strong className="text-[#b6e52d]">${Math.round(currentAudit.targetCash / 1000)}k</strong> Cash OR{' '}
+              <strong className="text-[#8fd3ff]">{currentAudit.targetLaunches} Launch</strong>
+              <span className="text-[#8c8aa0] ml-1">({launchesCompleted}/{currentAudit.targetLaunches})</span>
+            </div>
+
+            {/* Product Launch Charge Bar */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[9px] uppercase font-bold">
+                <span className="text-[#ded2b6] flex items-center gap-1">
+                  <Rocket className="h-3 w-3 text-[#b6e52d]" /> Launch Charge
+                </span>
+                <span className={productCharge >= 100 ? 'text-[#b6e52d] animate-pulse' : 'text-[#8fd3ff]'}>
+                  {productCharge}%
+                </span>
+              </div>
+              <PixelBar
+                value={productCharge}
+                max={100}
+                color={productCharge >= 100 ? 'lime' : 'blue'}
+                size="sm"
+              />
+            </div>
+
+            {/* Action Buttons: Launch Ready OR Collect Bubbles */}
+            <div className="mt-2 flex items-center gap-1.5">
+              {productCharge >= 100 ? (
+                <button
+                  type="button"
+                  onClick={openLaunchModal}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-[#b6e52d] hover:bg-[#cbf443] text-[#14121c] font-bold text-[10px] uppercase border-2 border-[#14121c] shadow-[2px_2px_0px_#000000] animate-pulse cursor-pointer"
+                >
+                  <Rocket className="h-3.5 w-3.5" />
+                  <span>LAUNCH PRODUCT!</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    collectAllBubbles((cashDelta) => {
+                      state.cash += cashDelta
+                      useGameStore.setState({ state: { ...state } })
+                    })
+                  }}
+                  disabled={activeBubblesCount === 0}
+                  className={`flex-1 flex items-center justify-center gap-1 py-1 text-[10px] font-bold uppercase border border-[#14121c] cursor-pointer ${activeBubblesCount > 0
+                      ? 'bg-[#3e6ec0] hover:bg-[#4d7dd4] text-white'
+                      : 'bg-[#2a2838] text-[#8c8aa0] cursor-not-allowed'
+                    }`}
+                  title="Or click glowing 3D bubbles directly in the room!"
+                >
+                  <Zap className="h-3 w-3 text-[#b6e52d]" />
+                  <span>Pop Bubbles ({activeBubblesCount})</span>
+                </button>
+              )}
+
+              {activePerks.length === 0 && (
+                <button
+                  type="button"
+                  onClick={openPerkDraft}
+                  className="px-2 py-1 bg-[#f2a93b] hover:bg-[#ffb94d] text-[#14121c] font-bold text-[10px] uppercase border border-[#14121c] cursor-pointer"
+                  title="Draft your starter roguelite perk!"
+                >
+                  <Sparkles className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+
+            {/* Active Roguelite Perk Chips */}
+            {activePerks.length > 0 && (
+              <div className="mt-2 pt-1.5 border-t border-[#2a2838] flex flex-wrap gap-1">
+                {activePerks.slice(-4).map((perk) => (
+                  <span
+                    key={perk.id}
+                    title={perk.description}
+                    className="px-1.5 py-0.5 bg-[#2a2838] border border-[#f2a93b]/60 text-[8px] font-bold text-[#fde68a] uppercase truncate max-w-[115px]"
+                  >
+                    ✦ {perk.name}
+                  </span>
+                ))}
+                {activePerks.length > 4 && (
+                  <span className="text-[8px] text-[#8fd3ff] font-bold">+{activePerks.length - 4}</span>
+                )}
+              </div>
+            )}
           </div>
-        )}
+
+          {/* OPTIONAL MASCOT TIP: "Synergy" from reference/mascot_clawd.jpg */}
+          {mascotTip && (
+            <div className="pointer-events-auto flex items-end gap-2 bg-[#14121c]/95 p-2 border-2 border-[#b6e52d] shadow-[4px_4px_0px_#14121c] max-w-xs animate-slide-up">
+              <img
+                src="/reference/mascot_clawd.jpg"
+                alt="Synergy Mascot"
+                className="w-9 h-9 object-contain pixelated shrink-0 border border-[#14121c] bg-[#c58a55]/20"
+              />
+              <div className="flex flex-col text-[10px] text-[#f4ecd8] overflow-hidden">
+                <span className="font-bold text-[#b6e52d] uppercase text-[9px]">
+                  Synergy the Mascot:
+                </span>
+                <p className="leading-tight">{mascotTip}</p>
+              </div>
+              <button
+                onClick={() => setMascotTip(null)}
+                className="text-[#8c8aa0] hover:text-white text-xs px-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* --------------------------------------------------------- */}
         {/* BOTTOM HUD: Vitals Left, Prompts Center, Chips Right */}

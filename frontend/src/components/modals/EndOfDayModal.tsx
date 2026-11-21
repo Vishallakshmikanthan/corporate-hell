@@ -5,6 +5,7 @@
  * ledger breakdown, workforce sentiment shifts, notable incidents, and campaign progress.
  */
 import { useGameStore } from '../../state/gameStore'
+import { useGamificationStore } from '../../state/gamificationStore'
 import {
   DollarSign,
   TrendingUp,
@@ -14,14 +15,30 @@ import {
   Award,
   ArrowRight,
   Calendar,
+  Sparkles,
 } from 'lucide-react'
 
 export function EndOfDayModal() {
   const isOpen = useGameStore((s) => s.isEndOfDayModalOpen)
   const close = useGameStore((s) => s.closeEndOfDayModal)
   const state = useGameStore((s) => s.state)
+  const openPerkDraft = useGamificationStore((s) => s.openPerkDraft)
+  const checkBoardAudit = useGamificationStore((s) => s.checkBoardAudit)
+  const currentAudit = useGamificationStore((s) => s.currentAudit)
+  const launchesCompleted = useGamificationStore((s) => s.launchesCompleted)
 
   if (!isOpen || !state) return null
+
+  const handleProceedAndDraft = () => {
+    checkBoardAudit(state.day - 1, state.cash, (bonusCash) => {
+      state.cash += bonusCash
+      useGameStore.setState({ state: { ...state } })
+    })
+    close()
+    // Pause while player drafts their roguelite startup perk card
+    useGameStore.getState().setPlaying(false)
+    openPerkDraft()
+  }
 
   // Latest DayLedger
   const ledger = state.history[state.history.length - 1]
@@ -119,13 +136,30 @@ export function EndOfDayModal() {
           </div>
         )}
 
+        {/* Board Audit Countdown Banner */}
+        <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-paper-200 flex items-center justify-between">
+          <div>
+            <span className="font-bold text-amber-300 uppercase">Next Board Audit (Day {currentAudit.dueDay}): </span>
+            <span>
+              ${currentAudit.targetCash.toLocaleString()} Cash OR {currentAudit.targetLaunches} Launch(es)
+            </span>
+          </div>
+          <span className="font-bold text-acid-400">
+            Reward: +${currentAudit.rewardCash.toLocaleString()}
+          </span>
+        </div>
+
         {/* Modal Action CTA */}
-        <div className="mt-6 flex justify-end">
+        <div className="mt-6 flex items-center justify-between">
+          <span className="text-[11px] text-ink-400">
+            Launches Shipped: <strong className="text-paper-100">{launchesCompleted}</strong>
+          </span>
           <button
-            onClick={close}
-            className="flex items-center gap-2 rounded-xl bg-corp-500 px-6 py-3 text-xs font-bold text-white shadow-lg shadow-corp-500/25 transition hover:bg-corp-600 active:scale-95"
+            onClick={handleProceedAndDraft}
+            className="flex items-center gap-2 rounded-xl bg-corp-500 px-6 py-3 text-xs font-bold text-white shadow-lg shadow-corp-500/25 transition hover:bg-corp-600 active:scale-95 cursor-pointer"
           >
-            <span>Proceed to Day {state.day}</span>
+            <Sparkles className="h-4 w-4 text-acid-400" />
+            <span>Draft Daily Perk & Start Day {state.day}</span>
             <ArrowRight className="h-4 w-4" />
           </button>
         </div>

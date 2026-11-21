@@ -10,6 +10,7 @@ import { Canvas } from '@react-three/fiber'
 import { OfficeFloor } from './environment/OfficeFloor'
 import { EmployeeCharacter } from './characters/EmployeeCharacter'
 import { PlayerAvatar } from './characters/PlayerAvatar'
+import { DopamineBubbles3D } from './DopamineBubbles3D'
 import { CameraController } from './CameraController'
 import { TacticalFallback } from './TacticalFallback'
 import { ExecutiveCommand } from '../components/layout/ExecutiveCommand'
@@ -154,6 +155,9 @@ export function OfficeScene() {
 
         {/* Playable Player Avatar */}
         <PlayerAvatar />
+
+        {/* Interactive 3D Dopamine Bubbles (Code, UX, Hype, Cash, Bugs) */}
+        <DopamineBubbles3D sceneType="office" />
 
         {/* Camera Orbit Controls and Smooth Navigation Lerp */}
         <CameraController />

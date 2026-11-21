@@ -357,6 +357,105 @@ class AudioService {
     osc.start(t)
     osc.stop(t + 0.15)
   }
+
+  /** Pitch-escalating pentatonic combo pop (instant arcade dopamine!) */
+  public playComboPop(combo: number = 1) {
+    if (this.muted) return
+    this.initContext()
+    if (!this.ctx || !this.masterGain) return
+
+    const pentatonic = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66, 1318.51]
+    const freq = pentatonic[Math.min(pentatonic.length - 1, Math.max(0, combo - 1))]
+    const t = this.ctx.currentTime
+    const osc = this.ctx.createOscillator()
+    const gain = this.ctx.createGain()
+
+    osc.type = combo >= 5 ? 'square' : 'triangle'
+    osc.frequency.setValueAtTime(freq, t)
+    osc.frequency.exponentialRampToValueAtTime(freq * 1.25, t + 0.09)
+
+    gain.gain.setValueAtTime(0.16, t)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14)
+
+    osc.connect(gain)
+    gain.connect(this.masterGain)
+
+    osc.start(t)
+    osc.stop(t + 0.14)
+  }
+
+  /** Retro bug squash crunch + pop */
+  public playBugSquash() {
+    if (this.muted) return
+    this.initContext()
+    if (!this.ctx || !this.masterGain) return
+
+    const t = this.ctx.currentTime
+    const osc = this.ctx.createOscillator()
+    const gain = this.ctx.createGain()
+
+    osc.type = 'sawtooth'
+    osc.frequency.setValueAtTime(240, t)
+    osc.frequency.exponentialRampToValueAtTime(75, t + 0.08)
+    osc.frequency.setValueAtTime(660, t + 0.09)
+
+    gain.gain.setValueAtTime(0.2, t)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18)
+
+    osc.connect(gain)
+    gain.connect(this.masterGain)
+
+    osc.start(t)
+    osc.stop(t + 0.18)
+  }
+
+  /** Drumroll / critic score reveal tick */
+  public playDrumrollTick(step: number = 0) {
+    if (this.muted) return
+    this.initContext()
+    if (!this.ctx || !this.masterGain) return
+
+    const t = this.ctx.currentTime
+    const osc = this.ctx.createOscillator()
+    const gain = this.ctx.createGain()
+
+    osc.type = 'square'
+    const base = 320 + step * 110
+    osc.frequency.setValueAtTime(base, t)
+    osc.frequency.exponentialRampToValueAtTime(base * 1.35, t + 0.12)
+
+    gain.gain.setValueAtTime(0.15, t)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15)
+
+    osc.connect(gain)
+    gain.connect(this.masterGain)
+
+    osc.start(t)
+    osc.stop(t + 0.15)
+  }
+
+  /** Sparkly roguelite perk card pick arpeggio */
+  public playCardSelect() {
+    if (this.muted) return
+    this.initContext()
+    if (!this.ctx || !this.masterGain) return
+
+    const t = this.ctx.currentTime
+    const notes = [523.25, 659.25, 783.99, 1046.5]
+    notes.forEach((freq, idx) => {
+      const osc = this.ctx!.createOscillator()
+      const gain = this.ctx!.createGain()
+      const start = t + idx * 0.055
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(freq, start)
+      gain.gain.setValueAtTime(0.15, start)
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.22)
+      osc.connect(gain)
+      gain.connect(this.masterGain!)
+      osc.start(start)
+      osc.stop(start + 0.22)
+    })
+  }
 }
 
 export const audio = new AudioService()

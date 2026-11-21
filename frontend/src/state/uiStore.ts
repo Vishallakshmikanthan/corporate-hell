@@ -64,7 +64,7 @@ let maxZ = 10
 
 export const useUiStore = create<UiStore>((set, get) => ({
   focus: 'world',
-  v3Enabled: false, // Default to the 9-Section Executive Simulation Hub!
+  v3Enabled: true, // Default to the immersive game-first Pixel-Art 3D World + CorpOS!
   openWindows: [],
   activeAppId: null,
   nerdMode: false,
@@ -73,7 +73,7 @@ export const useUiStore = create<UiStore>((set, get) => ({
   scale: 4,
   toasts: [],
   inspectedEmployeeId: null,
-  mascotTip: "Welcome to CorpOS! Press [E] to sit at your desk and run the company.",
+  mascotTip: "Click glowing 3D bubbles to build Combos & charge Launch! Press [E] to open CorpOS.",
 
   setFocus: (focus) => {
     if (focus === 'laptop') {

@@ -10,6 +10,7 @@
 import React, { useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { PlayerAvatar } from '../characters/PlayerAvatar'
+import { DopamineBubbles3D } from '../DopamineBubbles3D'
 import { CameraController } from '../CameraController'
 import { useGameStore } from '../../state/gameStore'
 import { CodeSprintMinigame } from '../../components/modals/CodeSprintMinigame'
@@ -188,6 +189,9 @@ export const BedroomScene: React.FC = () => {
 
         {/* Player Avatar */}
         <PlayerAvatar />
+
+        {/* Interactive 3D Dopamine Bubbles */}
+        <DopamineBubbles3D sceneType="bedroom" />
 
         <CameraController />
       </Canvas>

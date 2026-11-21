@@ -31,7 +31,7 @@ import { publishSocialPost, replyToComment } from '../engine/social'
 import { upgradeStage, checkStageProgression } from '../engine/growth'
 import { checkProximityInteractable, executeOfficeBreak, validateAvatarMove } from '../engine/avatar'
 import { resolvePitchDeckMiniGame } from '../engine/minigames/minigames'
-import { advanceCareerChapter } from '../engine/career'
+import { advanceCareerChapter, evaluateChapterProgress } from '../engine/career'
 
 const HIRING_COST: Record<Role, number> = {
   ceo: 10000,
@@ -1032,14 +1032,16 @@ export function applyAction(
             satisfaction: 85,
           })
         }
+        evaluateChapterProgress(state)
       }
       return { ok: true, message: 'Recruited co-founder to your hackathon squad!' }
     }
 
     case 'crunch_hackathon': {
       if (state.career) {
-        state.career.prototypeCompleteness = Math.min(100, state.career.prototypeCompleteness + action.hours * 4)
+        state.career.prototypeCompleteness = Math.min(100, state.career.prototypeCompleteness + action.hours * 6)
         state.career.hackathonHoursLeft = Math.max(0, state.career.hackathonHoursLeft - action.hours)
+        evaluateChapterProgress(state)
       }
       return { ok: true, message: `Crunched prototype for ${action.hours} hours!` }
     }
@@ -1048,6 +1050,7 @@ export function applyAction(
       if (state.career) {
         state.career.wonHackathon = action.won
         state.career.hackathonRank = action.rank
+        evaluateChapterProgress(state)
         if (action.won) {
           state.cash += action.prizeCash
           return {
@@ -1064,6 +1067,7 @@ export function applyAction(
       if (state.career) {
         state.career.coFounders = action.coFounders
         state.career.founderEquityPct = action.founderEquityPct
+        evaluateChapterProgress(state)
       }
       return { ok: true, message: `Finalized founding equity split (${action.founderEquityPct}% CEO stake).` }
     }

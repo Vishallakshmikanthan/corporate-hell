@@ -11,8 +11,10 @@
 import React, { useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { PlayerAvatar } from '../characters/PlayerAvatar'
+import { DopamineBubbles3D } from '../DopamineBubbles3D'
 import { CameraController } from '../CameraController'
 import { useGameStore } from '../../state/gameStore'
+import { useUiStore } from '../../state/uiStore'
 import { PitchDuelModal } from '../../components/modals/PitchDuelModal'
 import { PixelButton } from '../../ui/pixel/PixelButton'
 import { PixelBar } from '../../ui/pixel/PixelBar'
@@ -30,6 +32,7 @@ import {
 export const HackathonScene: React.FC = () => {
   const career = useGameStore((s) => s.state?.career)
   const dispatch = useGameStore((s) => s.dispatch)
+  const pushToast = useUiStore((s) => s.pushToast)
 
   const [showPitchDuel, setShowPitchDuel] = useState(false)
   const [selectedCandidate, setSelectedCandidate] = useState<string | null>(null)
@@ -46,14 +49,33 @@ export const HackathonScene: React.FC = () => {
   }
 
   const handleAdvanceToGarage = () => {
-    audio.playLever()
-    dispatch({ type: 'advance_chapter', targetChapter: 'garage' })
+    const res = dispatch({ type: 'advance_chapter', targetChapter: 'garage' })
+    if (res.ok) {
+      audio.playCelebration()
+      pushToast({
+        title: 'Chapter 3 Unlocked: The Garage!',
+        description: '$25,000 Angel prize deposited. Time to incorporate!',
+        severity: 'celebrate',
+      })
+    } else {
+      audio.playAlert()
+      const missing = (career?.objectives || [])
+        .filter((o) => !o.completed)
+        .map((o) => o.title)
+        .join(', ')
+      pushToast({
+        title: 'Finish Hackathon Goals First!',
+        description: missing ? `Remaining: ${missing}` : res.reason || 'Complete all 3 goals to advance.',
+        severity: 'warn',
+      })
+    }
   }
 
   const recruitedCount = career?.recruitedCoFounders.length || 0
   const prototypePercent = career?.prototypeCompleteness || 0
   const hoursLeft = career?.hackathonHoursLeft || 0
   const won = career?.wonHackathon || false
+  const allGoalsDone = recruitedCount >= 2 && prototypePercent >= 100 && won
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#14121c] font-mono select-none crt-scanlines">
@@ -149,6 +171,9 @@ export const HackathonScene: React.FC = () => {
         {/* Player Avatar */}
         <PlayerAvatar />
 
+        {/* Interactive 3D Dopamine Bubbles */}
+        <DopamineBubbles3D sceneType="office" />
+
         <CameraController />
       </Canvas>
 
@@ -199,16 +224,24 @@ export const HackathonScene: React.FC = () => {
         {won && (
           <button
             onClick={handleAdvanceToGarage}
-            className="mt-3 w-full flex items-center justify-center gap-1.5 p-2 bg-[#b6e52d] hover:bg-[#c9f538] text-[#14121c] font-bold text-xs uppercase border-2 border-[#14121c] shadow-[2px_2px_0px_#14121c] cursor-pointer animate-pulse"
+            className={`mt-3 w-full flex items-center justify-center gap-1.5 p-2 font-bold text-xs uppercase border-2 border-[#14121c] shadow-[2px_2px_0px_#14121c] cursor-pointer ${
+              allGoalsDone
+                ? 'bg-[#b6e52d] hover:bg-[#c9f538] text-[#14121c] animate-pulse'
+                : 'bg-[#f2a93b] hover:bg-[#ffb94d] text-[#14121c]'
+            }`}
           >
-            <span>Incorporate Startup & Move to Garage (Ch 3)</span>
+            <span>
+              {allGoalsDone
+                ? 'Incorporate Startup & Move to Garage (Ch 3)'
+                : `Complete Remaining Goals (${recruitedCount}/2 Team, ${prototypePercent}% MVP)`}
+            </span>
             <ArrowRight className="h-4 w-4" />
           </button>
         )}
       </div>
 
-      {/* Co-Founder Candidates Roster (Left Floating Drawer) */}
-      <div className="absolute top-28 left-3.5 z-20 w-72 bg-[#1a1824] border-2 border-[#14121c] shadow-[4px_4px_0px_#14121c] p-2.5 text-xs text-[#f4ecd8]">
+      {/* Co-Founder Candidates Roster (Right Floating Drawer below Goals — zero overlap with left HUD) */}
+      <div className="absolute bottom-[90px] right-3.5 z-20 w-80 bg-[#1a1824] border-2 border-[#14121c] shadow-[4px_4px_0px_#14121c] p-2.5 text-xs text-[#f4ecd8]">
         <div className="flex items-center gap-1 text-[11px] font-bold uppercase text-[#b6e52d] border-b border-[#4b4a5e] pb-1 mb-2">
           <Users className="h-3.5 w-3.5" />
           <span>CO-FOUNDER TALENT POOL ({recruitedCount}/2)</span>

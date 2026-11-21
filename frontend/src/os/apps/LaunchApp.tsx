@@ -7,6 +7,7 @@
 import React, { useState } from 'react'
 import { useGameStore } from '../../state/gameStore'
 import { useUiStore } from '../../state/uiStore'
+import { useGamificationStore } from '../../state/gamificationStore'
 import { Rocket, ShieldAlert, CheckCircle2, AlertTriangle, Radio, Flame, Activity } from 'lucide-react'
 import { PixelButton } from '../../ui/pixel/PixelButton'
 import { PixelBar } from '../../ui/pixel/PixelBar'
@@ -16,6 +17,7 @@ import { audio } from '../../services/audio'
 export const LaunchApp: React.FC = () => {
   const dispatch = useGameStore((s) => s.dispatch)
   const pushToast = useUiStore((s) => s.pushToast)
+  const openLaunchModal = useGamificationStore((s) => s.openLaunchModal)
 
   const [safetyCoverOpen, setSafetyCoverOpen] = useState(false)
   const [selectedChannels, setSelectedChannels] = useState<string[]>([
@@ -48,9 +50,10 @@ export const LaunchApp: React.FC = () => {
       type: 'launch_product',
       name: 'Product v1.0',
     })
+    openLaunchModal()
     pushToast({
       title: 'T-MINUS ZERO: LAUNCHED!',
-      description: 'Product Hunt #1 spot achieved! Massive traffic spike incoming!',
+      description: 'Critics are scoring your release live!',
       severity: 'celebrate',
       appId: 'launch',
     })
